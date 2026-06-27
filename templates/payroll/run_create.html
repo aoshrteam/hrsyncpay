@@ -1,0 +1,86 @@
+<!-- templates/payroll/run_create.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Create Payroll Run - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'payroll:run_list' %}">Payroll Runs</a></li>
+    <li class="breadcrumb-item active">Create</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-plus-circle"></i> Create Payroll Run</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Note:</strong> Payroll can be processed for a specific client or all clients.
+                </div>
+
+                <form method="post" action="{% url 'payroll:run_create' %}">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_month_year" class="form-label">Month & Year *</label>
+                        <input type="month" name="month_year" id="id_month_year"
+                               class="form-control"
+                               value="{{ current_month }}"
+                               required>
+                        <div class="form-text">Select the month for payroll processing</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_client" class="form-label">Client</label>
+                        <select name="client" id="id_client" class="form-control">
+                            <option value="">All Clients</option>
+                            {% for client in clients %}
+                                <option value="{{ client.id }}">{{ client.name }} ({{ client.code }})</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Leave blank to process all clients</div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Before creating payroll run:</strong>
+                        <ul class="mb-0 mt-1">
+                            <li>Ensure attendance is finalized for the month</li>
+                            <li>Ensure all employees have valid assignments</li>
+                            <li>Statutory settings should be configured</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> Create Run
+                        </button>
+                        <a href="{% url 'payroll:run_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default month to current month if empty
+    const monthInput = document.getElementById('id_month_year');
+    if (monthInput && !monthInput.value) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        monthInput.value = year + '-' + month;
+    }
+});
+</script>
+{% endblock %}

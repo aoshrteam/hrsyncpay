@@ -1,0 +1,74 @@
+<!-- templates/loans/loan_deduction_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Deduction Detail - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'loans:loan_list' %}">Employee Loans</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'loans:loan_detail' loan.id %}">{{ loan.employee.name }}</a></li>
+    <li class="breadcrumb-item active">Installment {{ deduction.installment_number }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-receipt"></i> Deduction Detail
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>Employee:</strong> {{ loan.employee.name }}<br>
+                    <strong>Loan Type:</strong> {{ loan.loan_type.name }}<br>
+                    <strong>Installment No:</strong> {{ deduction.installment_number }} / {{ loan.total_installments }}
+                </div>
+
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Month/Year</th>
+                        <td>{{ deduction.month_year|date:"F Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Amount</th>
+                        <td><strong>₹{{ deduction.amount|floatformat:2 }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Principal Amount</th>
+                        <td>₹{{ deduction.principal_amount|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <th>Interest Amount</th>
+                        <td>₹{{ deduction.interest_amount|floatformat:2 }}</td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td>
+                            {% if deduction.deducted %}
+                                <span class="badge bg-success">Deducted on {{ deduction.deducted_date|date:"d-M-Y" }}</span>
+                            {% else %}
+                                <span class="badge bg-warning">Pending</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if deduction.process_voucher_detail %}
+                        <tr>
+                            <th>Payroll Reference</th>
+                            <td>{{ deduction.process_voucher_detail }}</td>
+                        </tr>
+                    {% endif %}
+                </table>
+
+                <div class="d-grid gap-2 mt-3">
+                    <a href="{% url 'loans:loan_detail' loan.id %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Loan
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

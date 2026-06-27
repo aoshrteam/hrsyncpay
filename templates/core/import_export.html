@@ -1,0 +1,103 @@
+<!-- templates/core/import_export.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'core:import_export' %}">Import/Export</a></li>
+    <li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-file-import"></i> {{ title }}</h5>
+            </div>
+            <div class="card-body">
+                <!-- Step 1: Download Sample -->
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-download"></i> Step 1: Download Sample Template</h6>
+                    <p>Download the sample template with instructions to understand the required format.</p>
+
+                    {% if import_type == 'employees' %}
+                        <a href="{% url 'core:download_employee_sample' %}" class="btn btn-success">
+                            <i class="fas fa-download"></i> Download Employee Sample Template
+                        </a>
+                    {% elif import_type == 'clients' %}
+                        <a href="{% url 'core:download_client_sample' %}" class="btn btn-success">
+                            <i class="fas fa-download"></i> Download Client Sample Template
+                        </a>
+                    {% else %}
+                        <a href="#" class="btn btn-success">
+                            <i class="fas fa-download"></i> Download Sample Template
+                        </a>
+                    {% endif %}
+                </div>
+
+                <hr>
+
+                <!-- Step 2: Upload File -->
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-upload"></i> Step 2: Upload Filled Excel File</h6>
+                    <p>Fill the data in the template and upload it here.</p>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="excelFile" class="form-label">Select Excel File</label>
+                            <input type="file" name="excel_file" class="form-control"
+                                   id="excelFile" accept=".xlsx,.xls" required>
+                            <div class="form-text">Supported formats: .xlsx, .xls</div>
+                            <div id="fileNameDisplay" class="file-name-display mt-2" style="display: none; color: #198754; font-weight: bold;"></div>
+                        </div>
+
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Important:</strong>
+                            <ul class="mb-0">
+                                <li>Do not change the column headers</li>
+                                <li>Do not provide Employee Code - It will be auto-generated</li>
+                                <li>Existing records will be updated (matched by unique identifiers)</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-3">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-upload"></i> Import Now
+                            </button>
+                            <a href="{% url 'core:import_export' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('excelFile');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+
+    if (fileInput && fileNameDisplay) {
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                fileNameDisplay.textContent = '📄 ' + file.name + ' (' + fileSize + ' MB)';
+                fileNameDisplay.style.display = 'block';
+            } else {
+                fileNameDisplay.style.display = 'none';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

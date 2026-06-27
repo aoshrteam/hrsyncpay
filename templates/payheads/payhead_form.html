@@ -1,0 +1,144 @@
+<!-- templates/payheads/payhead_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'payheads:payhead_list' %}">Payheads</a></li>
+    <li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ title }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- Basic Details -->
+                    <h6 class="border-bottom pb-2 mb-3 text-primary">
+                        <i class="fas fa-info-circle"></i> Basic Details
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.client|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.name|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.type|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.category|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.code|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.description|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- Calculation Settings -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-success">
+                        <i class="fas fa-calculator"></i> Calculation Settings
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.calculation_type|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.default_value|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.display_order|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.min_value|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.max_value|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.is_active|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.formula|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- Statutory Settings -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-danger">
+                        <i class="fas fa-shield-alt"></i> Statutory Settings
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-3">
+                            {{ form.is_statutory|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.is_taxable|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.is_mandatory|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.requires_approval|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> {{ button_text }}
+                        </button>
+                        <a href="{% url 'payheads:payhead_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show/hide formula field based on calculation type
+    document.addEventListener('DOMContentLoaded', function() {
+        const calcType = document.getElementById('id_calculation_type');
+        const formulaField = document.getElementById('div_id_formula');
+
+        function toggleFormula() {
+            if (calcType && formulaField) {
+                if (calcType.value === 'FORMULA') {
+                    formulaField.style.display = 'block';
+                } else {
+                    formulaField.style.display = 'none';
+                }
+            }
+        }
+
+        if (calcType) {
+            calcType.addEventListener('change', toggleFormula);
+            toggleFormula();
+        }
+    });
+</script>
+{% endblock %}

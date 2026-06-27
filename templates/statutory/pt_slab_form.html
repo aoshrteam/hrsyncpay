@@ -1,0 +1,58 @@
+<!-- templates/statutory/pt_slab_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'statutory:statutory_settings' %}">Statutory Settings</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'statutory:pt_slab_list' %}">PT Slabs</a></li>
+    <li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ title }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Note:</strong>
+                    <ul class="mb-0">
+                        <li>Slabs are applied based on gross salary</li>
+                        <li>Leave max amount blank for slabs above a certain limit</li>
+                    </ul>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Example:</strong><br>
+                        State: Rajasthan<br>
+                        Min: 0, Max: 10000, Tax: 0<br>
+                        Min: 10001, Max: 20000, Tax: 200<br>
+                        Min: 20001, Max: (blank), Tax: 500
+                    </div>
+
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> {{ button_text }}
+                        </button>
+                        <a href="{% url 'statutory:pt_slab_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

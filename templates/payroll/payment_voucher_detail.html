@@ -1,0 +1,191 @@
+<!-- templates/payroll/payment_voucher_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment Voucher - {{ voucher.voucher_number }}{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'payroll:payment_voucher_list' %}">Payment Vouchers</a></li>
+    <li class="breadcrumb-item active">{{ voucher.voucher_number }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-hand-holding-usd"></i> {{ voucher.voucher_number }}</h4>
+    <div>
+        {% if voucher.status == 'DRAFT' %}
+            <a href="{% url 'payroll:payment_voucher_approve' voucher.id %}" class="btn btn-success"
+               onclick="return confirm('Approve this payment?')">
+                <i class="fas fa-check"></i> Approve
+            </a>
+            <a href="{% url 'payroll:payment_voucher_cancel' voucher.id %}" class="btn btn-danger"
+               onclick="return confirm('Cancel this payment?')">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+        {% endif %}
+        <a href="{% url 'payroll:payment_voucher_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h6 class="card-title">Total Employees</h6>
+                <h2 class="mb-0">{{ details|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h6 class="card-title">Total Amount</h6>
+                <h2 class="mb-0">₹{{ voucher.total_amount|floatformat:2 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h6 class="card-title">Status</h6>
+                <h2 class="mb-0">
+                    {% if voucher.status == 'DRAFT' %}
+                        <span class="badge bg-secondary">Draft</span>
+                    {% elif voucher.status == 'PENDING' %}
+                        <span class="badge bg-warning">Pending</span>
+                    {% elif voucher.status == 'PAID' %}
+                        <span class="badge bg-success">Paid</span>
+                    {% elif voucher.status == 'CANCELLED' %}
+                        <span class="badge bg-danger">Cancelled</span>
+                    {% endif %}
+                </h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h6 class="card-title">Payment Date</h6>
+                <h5 class="mb-0">{{ voucher.payment_date|date:"d-M-Y" }}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Voucher Details -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-info-circle"></i> Voucher Details</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <strong>Voucher No:</strong> {{ voucher.voucher_number }}
+            </div>
+            <div class="col-md-3">
+                <strong>Type:</strong> {{ voucher.get_payment_type_display }}
+            </div>
+            <div class="col-md-3">
+                <strong>Client:</strong> {{ voucher.client.name|default:"All Clients" }}
+            </div>
+            <div class="col-md-3">
+                <strong>Payroll Run:</strong> {{ voucher.payroll_run.run_number }}
+            </div>
+        </div>
+        {% if voucher.notes %}
+            <div class="row mt-2">
+                <div class="col-12">
+                    <strong>Notes:</strong> {{ voucher.notes }}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Employee-wise Details -->
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-users"></i> Employee-wise Payment</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Employee</th>
+                        <th>Code</th>
+                        <th>Amount</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detail in details %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ detail.employee.name }}</td>
+                        <td><code>{{ detail.employee.employee_code }}</code></td>
+                        <td><strong>₹{{ detail.amount|floatformat:2 }}</strong></td>
+                        <td>{{ detail.description|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted"></i>
+                            <p class="mt-2">No employee details found.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th colspan="3" class="text-end">Total:</th>
+                        <th colspan="2">₹{{ voucher.total_amount|floatformat:2 }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Accounting Entry Preview -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-file-invoice"></i> Accounting Entry</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Particulars</th>
+                        <th>Debit (₹)</th>
+                        <th>Credit (₹)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Payable Ledger</td>
+                        <td>₹{{ voucher.total_amount|floatformat:2 }}</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>Bank Ledger</td>
+                        <td>-</td>
+                        <td>₹{{ voucher.total_amount|floatformat:2 }}</td>
+                    </tr>
+                    <tr class="table-success">
+                        <td><strong>Total</strong></td>
+                        <td><strong>₹{{ voucher.total_amount|floatformat:2 }}</strong></td>
+                        <td><strong>₹{{ voucher.total_amount|floatformat:2 }}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

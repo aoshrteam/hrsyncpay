@@ -1,0 +1,164 @@
+<!-- templates/leave/leave_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Leave Detail - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'leave:leave_list' %}">Employee Leaves</a></li>
+    <li class="breadcrumb-item active">{{ leave.employee.name }} - {{ leave.leave_type.name }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-calendar-check"></i> Leave Details</h4>
+    <div>
+        {% if leave.status == 'PENDING' %}
+            <a href="{% url 'leave:leave_approve' leave.id %}" class="btn btn-success"
+               onclick="return confirm('Approve this leave request?')">
+                <i class="fas fa-check"></i> Approve
+            </a>
+            <a href="{% url 'leave:leave_reject' leave.id %}" class="btn btn-danger"
+               onclick="return confirm('Reject this leave request?')">
+                <i class="fas fa-times"></i> Reject
+            </a>
+            <a href="{% url 'leave:leave_edit' leave.id %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+        {% endif %}
+        {% if leave.status == 'APPROVED' %}
+            <a href="{% url 'leave:leave_cancel' leave.id %}" class="btn btn-danger"
+               onclick="return confirm('Cancel this approved leave?')">
+                <i class="fas fa-ban"></i> Cancel
+            </a>
+        {% endif %}
+        <a href="{% url 'leave:leave_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Leave Information</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Employee:</th>
+                        <td>
+                            <a href="{% url 'employees:employee_detail' leave.employee.id %}">
+                                {{ leave.employee.name }}
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Employee Code:</th>
+                        <td>{{ leave.employee.employee_code }}</td>
+                    </tr>
+                    <tr>
+                        <th>Leave Type:</th>
+                        <td>{{ leave.leave_type.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Start Date:</th>
+                        <td>{{ leave.start_date|date:"d-M-Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>End Date:</th>
+                        <td>{{ leave.end_date|date:"d-M-Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Days:</th>
+                        <td><strong>{{ leave.total_days|floatformat:1 }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Half Day:</th>
+                        <td>
+                            {% if leave.is_half_day %}
+                                {{ leave.get_half_day_type_display }}
+                            {% else %}
+                                Full Day
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            {% if leave.status == 'PENDING' %}
+                                <span class="badge bg-warning">Pending</span>
+                            {% elif leave.status == 'APPROVED' %}
+                                <span class="badge bg-success">Approved</span>
+                            {% elif leave.status == 'REJECTED' %}
+                                <span class="badge bg-danger">Rejected</span>
+                            {% elif leave.status == 'CANCELLED' %}
+                                <span class="badge bg-secondary">Cancelled</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Reason:</th>
+                        <td>{{ leave.reason|default:"-" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-user"></i> Employee Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    {% if leave.employee.photo %}
+                        <img src="{{ leave.employee.photo.url }}" alt="{{ leave.employee.name }}"
+                             class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center"
+                             style="width: 100px; height: 100px;">
+                            <i class="fas fa-user fa-3x text-white"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Email:</th>
+                        <td>{{ leave.employee.email }}</td>
+                    </tr>
+                    <tr>
+                        <th>Phone:</th>
+                        <td>{{ leave.employee.phone }}</td>
+                    </tr>
+                    <tr>
+                        <th>Current Client:</th>
+                        <td>
+                            {% for assignment in leave.employee.assignments.all %}
+                                {% if assignment.is_current %}
+                                    {{ assignment.client.name }}
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Leave Balance -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-balance-scale"></i> Leave Balance</h6>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'leave:leave_balance' leave.employee.id %}" class="btn btn-info btn-sm">
+                    <i class="fas fa-eye"></i> View Full Balance
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

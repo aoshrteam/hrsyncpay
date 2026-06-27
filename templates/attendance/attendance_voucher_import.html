@@ -1,0 +1,84 @@
+<!-- templates/attendance/attendance_voucher_import.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Import Attendance - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'attendance:attendance_voucher_list' %}">Attendance</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'attendance:attendance_voucher_detail' voucher.id %}">{{ voucher.voucher_number }}</a></li>
+    <li class="breadcrumb-item active">Import Excel</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-file-import"></i> Import Attendance</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Voucher:</strong> {{ voucher.voucher_number }}<br>
+                    <strong>Month:</strong> {{ voucher.month_year|date:"F Y" }}<br>
+                    <strong>Client:</strong> {{ voucher.client.name }}
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Important:</strong>
+                    <ul class="mb-0">
+                        <li>Use the <a href="{% url 'attendance:attendance_download_template' %}" target="_blank">Sample Template</a></li>
+                        <li>Employee Code must match exactly</li>
+                        <li>Only active employees with current assignment to this client will be imported</li>
+                        <li>Existing records will be updated</li>
+                    </ul>
+                </div>
+
+                <!-- ✅ Form with correct action -->
+                <form method="post" enctype="multipart/form-data" action="{% url 'attendance:attendance_voucher_import' voucher.id %}">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-upload"></i> Import
+                        </button>
+                        <a href="{% url 'attendance:attendance_voucher_detail' voucher.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Voucher
+                        </a>
+                    </div>
+                </form>
+
+                <hr>
+                <div class="text-center">
+                    <p class="text-muted">Don't have a template?</p>
+                    <a href="{% url 'attendance:attendance_download_template' %}" class="btn btn-info" target="_blank">
+                        <i class="fas fa-download"></i> Download Sample Template
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const fileInput = document.getElementById('id_excel_file');
+
+    if (form && fileInput) {
+        form.addEventListener('submit', function(e) {
+            if (!fileInput.files || !fileInput.files[0]) {
+                e.preventDefault();
+                alert('Please select a file first.');
+                return false;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

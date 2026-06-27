@@ -1,0 +1,368 @@
+<!-- templates/employees/employee_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ employee.name }} - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'employees:employee_list' %}">Employees</a></li>
+    <li class="breadcrumb-item active">{{ employee.name }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <!-- Employee Info Card -->
+        <div class="card">
+            <div class="card-body text-center">
+                {% if employee.photo %}
+                    <img src="{{ employee.photo.url }}" alt="{{ employee.name }}"
+                         class="rounded-circle img-fluid" style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #0d6efd;">
+                {% else %}
+                    <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center mx-auto"
+                         style="width: 150px; height: 150px;">
+                        <i class="fas fa-user fa-4x text-white"></i>
+                    </div>
+                {% endif %}
+                <h4 class="mt-3">{{ employee.name }}</h4>
+                <p class="text-muted">
+                    <code>{{ employee.employee_code }}</code>
+                    <br>
+                    <span class="badge {% if employee.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                        {% if employee.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </p>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'employees:employee_edit' employee.id %}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit Employee
+                    </a>
+                    <a href="{% url 'employees:employee_documents' employee.id %}" class="btn btn-primary">
+                        <i class="fas fa-file-upload"></i> Documents
+                    </a>
+                    <a href="{% url 'employees:employee_assignments' employee.id %}" class="btn btn-info">
+                        <i class="fas fa-briefcase"></i> Assignments
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-pie"></i> Quick Stats</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <span class="text-muted">Documents:</span>
+                    <span class="float-end fw-bold">{{ documents|length }}</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted">Assignments:</span>
+                    <span class="float-end fw-bold">{{ assignments|length }}</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted">Status:</span>
+                    <span class="float-end">
+                        {% if employee.is_active %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-danger">Inactive</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div>
+                    <span class="text-muted">Joined:</span>
+                    <span class="float-end">{{ employee.date_of_joining|date:"d-M-Y"|default:"N/A" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <!-- Personal Details -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-user"></i> Personal Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th>Name:</th>
+                                <td>{{ employee.name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Father Name:</th>
+                                <td>{{ employee.father_name|default:"N/A" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Mother Name:</th>
+                                <td>{{ employee.mother_name|default:"N/A" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Date of Birth:</th>
+                                <td>{{ employee.date_of_birth|date:"d-M-Y"|default:"N/A" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Gender:</th>
+                                <td>{{ employee.get_gender_display }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th>Email:</th>
+                                <td>{{ employee.email }}</td>
+                            </tr>
+                            <tr>
+                                <th>Phone:</th>
+                                <td>{{ employee.phone }}</td>
+                            </tr>
+                            <tr>
+                                <th>Alternate Phone:</th>
+                                <td>{{ employee.alternate_phone|default:"N/A" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Employee Code:</th>
+                                <td><code>{{ employee.employee_code }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>Date of Joining:</th>
+                                <td>{{ employee.date_of_joining|date:"d-M-Y"|default:"N/A" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Current Address:</h6>
+                        <p>{{ employee.current_address|default:"N/A" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Permanent Address:</h6>
+                        <p>{{ employee.permanent_address|default:"N/A" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statutory Details -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-id-card"></i> Statutory Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>PAN:</strong> {{ employee.pan_number|default:"N/A" }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Aadhaar:</strong> {{ employee.aadhaar_number|default:"N/A" }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>UAN:</strong> {{ employee.uan_number|default:"N/A" }}
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <strong>PF Number:</strong> {{ employee.pf_number|default:"N/A" }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>ESI Number:</strong> {{ employee.esi_number|default:"N/A" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bank Details -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-university"></i> Bank Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Bank Name:</strong> {{ employee.bank_name|default:"N/A" }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Branch:</strong> {{ employee.bank_branch|default:"N/A" }}
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <strong>Account Number:</strong> {{ employee.bank_account_number|default:"N/A" }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>IFSC Code:</strong> {{ employee.ifsc_code|default:"N/A" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignments -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-briefcase"></i> Assignments</h6>
+                <a href="{% url 'employees:assignment_create' employee.id %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus"></i> Add Assignment
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Client</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Salary Method</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in assignments %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ assignment.client.name }}</td>
+                                <td>{{ assignment.start_date|date:"d-M-Y" }}</td>
+                                <td>{{ assignment.end_date|date:"d-M-Y"|default:"Present" }}</td>
+                                <td>{{ assignment.get_salary_method_display }}</td>
+                                <td>
+                                    {% if assignment.is_current %}
+                                        <span class="badge bg-success">Current</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Past</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-3">
+                                    <i class="fas fa-briefcase text-muted"></i>
+                                    <p class="mt-1">No assignments found.</p>
+                                    <a href="{% url 'employees:assignment_create' employee.id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-plus"></i> Add Assignment
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- templates/employees/employee_detail.html - Add this section -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-user"></i> {{ employee.name }}</h4>
+    <div>
+        <!-- ✅ Service History Button -->
+        <a href="{% url 'employees:service_history' employee.id %}" class="btn btn-info">
+            <i class="fas fa-history"></i> Service History
+        </a>
+        <a href="{% url 'employees:employee_edit' employee.id %}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit
+        </a>
+        <a href="{% url 'employees:employee_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<!-- templates/employees/employee_detail.html - Add Service History link -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-user"></i> {{ employee.name }}</h4>
+    <div>
+        <!-- ✅ Service History Button -->
+        <a href="{% url 'employees:service_history' employee.id %}" class="btn btn-info">
+            <i class="fas fa-history"></i> Service History
+        </a>
+        <a href="{% url 'employees:employee_edit' employee.id %}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit
+        </a>
+        <a href="{% url 'employees:employee_delete' employee.id %}" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Delete
+        </a>
+        <a href="{% url 'employees:employee_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<!-- templates/employees/employee_detail.html - Assignment Section -->
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0"><i class="fas fa-briefcase"></i> Assignments</h6>
+        <a href="{% url 'employees:assignment_create' employee.id %}" class="btn btn-sm btn-primary">
+            <i class="fas fa-plus"></i> Add Assignment
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Client</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Salary Method</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in assignments %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ assignment.client.name }}</td>
+                        <td>{{ assignment.start_date|date:"d-M-Y" }}</td>
+                        <td>{{ assignment.end_date|date:"d-M-Y"|default:"Present" }}</td>
+                        <td>{{ assignment.get_salary_method_display }}</td>
+                        <td>
+                            {% if assignment.is_current %}
+                                <span class="badge bg-success">Current</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Past</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <!-- ✅ Edit Assignment Button -->
+                            <a href="{% url 'employees:assignment_edit' assignment.id %}"
+                               class="btn btn-sm btn-warning" title="Edit Assignment">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <!-- ✅ Delete Assignment Button -->
+                            <a href="{% url 'employees:assignment_delete' assignment.id %}"
+                               class="btn btn-sm btn-danger" title="Delete Assignment"
+                               onclick="return confirm('Delete this assignment?')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-3">
+                            <i class="fas fa-briefcase text-muted"></i>
+                            <p class="mt-1">No assignments found.</p>
+                            <a href="{% url 'employees:assignment_create' employee.id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus"></i> Add Assignment
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

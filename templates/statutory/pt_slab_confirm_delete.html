@@ -1,0 +1,53 @@
+<!-- templates/statutory/pt_slab_confirm_delete.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete PT Slab - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'statutory:statutory_settings' %}">Statutory Settings</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'statutory:pt_slab_list' %}">PT Slabs</a></li>
+    <li class="breadcrumb-item active">Delete</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Confirm Delete</h5>
+            </div>
+            <div class="card-body text-center py-4">
+                <i class="fas fa-table fa-4x text-danger mb-3"></i>
+                <h5>Are you sure you want to delete this PT slab?</h5>
+                <p class="text-muted">
+                    <strong>{{ slab.state }}</strong><br>
+                    ₹{{ slab.min_amount|floatformat:2 }}
+                    {% if slab.max_amount %}
+                        - ₹{{ slab.max_amount|floatformat:2 }}
+                    {% else %}
+                        and above
+                    {% endif %}
+                    → ₹{{ slab.tax_amount|floatformat:2 }}
+                </p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-circle"></i>
+                    This action cannot be undone.
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="fas fa-trash"></i> Yes, Delete Slab
+                        </button>
+                        <a href="{% url 'statutory:pt_slab_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

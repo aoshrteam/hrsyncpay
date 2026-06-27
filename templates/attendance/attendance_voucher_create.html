@@ -1,0 +1,81 @@
+<!-- templates/attendance/attendance_voucher_create.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Create Attendance Voucher - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'attendance:attendance_voucher_list' %}">Attendance</a></li>
+    <li class="breadcrumb-item active">Create Attendance Voucher</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-plus-circle"></i> Create Attendance Voucher</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Note:</strong> After creating the voucher, you can add employees or import attendance from Excel.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_month_year" class="form-label">Month & Year *</label>
+                        <input type="month" name="month_year" id="id_month_year"
+                               class="form-control"
+                               value="{{ form.month_year.value|date:'Y-m'|default:'' }}"
+                               required>
+                        <div class="form-text">Select the month for attendance</div>
+                        {% if form.month_year.errors %}
+                            <div class="text-danger">{{ form.month_year.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_client" class="form-label">Client *</label>
+                        <select name="client" id="id_client" class="form-control" required>
+                            <option value="">---------</option>
+                            {% for client in form.fields.client.queryset %}
+                                <option value="{{ client.id }}" {% if form.client.value == client.id %}selected{% endif %}>
+                                    {{ client.name }} ({{ client.code }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Select the client for this attendance</div>
+                        {% if form.client.errors %}
+                            <div class="text-danger">{{ form.client.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>After creating this voucher:</strong>
+                        <ul class="mb-0 mt-1">
+                            <li>Go to Voucher Detail page</li>
+                            <li>Click <strong>"Add Employee"</strong> to add individual employees</li>
+                            <li>OR click <strong>"Import Excel"</strong> to bulk import</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> Create Voucher
+                        </button>
+                        <a href="{% url 'attendance:attendance_voucher_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

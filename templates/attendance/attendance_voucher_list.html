@@ -1,0 +1,204 @@
+<!-- templates/attendance/attendance_voucher_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Attendance Vouchers - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item active">Attendance Vouchers</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-calendar-check"></i> Attendance Vouchers</h4>
+    <div>
+        <a href="{% url 'attendance:attendance_voucher_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Voucher
+        </a>
+        <a href="{% url 'attendance:attendance_download_template' %}" class="btn btn-success">
+            <i class="fas fa-file-excel"></i> Download Template
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <select name="client" class="form-control">
+                    <option value="">All Clients</option>
+                    {% for client in clients %}
+                        <option value="{{ client.id }}" {% if request.GET.client == client.id|stringformat:"s" %}selected{% endif %}>
+                            {{ client.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="month" class="form-control">
+                    <option value="">Month</option>
+                    {% for m in months %}
+                        <option value="{{ m }}" {% if request.GET.month == m|stringformat:"s" %}selected{% endif %}>
+                            {{ m }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="year" class="form-control">
+                    <option value="">Year</option>
+                    {% for y in years %}
+                        <option value="{{ y }}" {% if request.GET.year == y|stringformat:"s" %}selected{% endif %}>
+                            {{ y }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'attendance:attendance_voucher_list' %}" class="btn btn-secondary w-100">
+                    <i class="fas fa-undo"></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Voucher Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Voucher No</th>
+                        <th>Month</th>
+                        <th>Client</th>
+                        <th>Employees</th>
+                        <th>Total Present</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for voucher in page_obj %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <a href="{% url 'attendance:attendance_voucher_detail' voucher.id %}">
+                                <code>{{ voucher.voucher_number }}</code>
+                            </a>
+                        </td>
+                        <td>{{ voucher.month_year|date:"M Y" }}</td>
+                        <td>{{ voucher.client.name }}</td>
+                        <td>{{ voucher.total_employees }}</td>
+                        <td>{{ voucher.total_present_days|floatformat:0 }}</td>
+                        <td>
+                            {% if voucher.status == 'DRAFT' %}
+                                <span class="badge bg-warning">Draft</span>
+                            {% elif voucher.status == 'FINALIZED' %}
+                                <span class="badge bg-success">Finalized</span>
+                            {% else %}
+                                <span class="badge bg-info">Processed</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'attendance:attendance_voucher_detail' voucher.id %}"
+                                   class="btn btn-sm btn-info" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if voucher.status == 'DRAFT' %}
+                                    <a href="{% url 'attendance:attendance_voucher_edit' voucher.id %}"
+                                       class="btn btn-sm btn-warning" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'attendance:attendance_voucher_import' voucher.id %}"
+                                       class="btn btn-sm btn-success" title="Import Excel">
+                                        <i class="fas fa-file-import"></i>
+                                    </a>
+                                    <a href="{% url 'attendance:attendance_voucher_finalize' voucher.id %}"
+                                       class="btn btn-sm btn-primary" title="Finalize"
+                                       onclick="return confirm('Finalize this voucher?')">
+                                        <i class="fas fa-check"></i>
+                                    </a>
+                                    <a href="{% url 'attendance:attendance_voucher_delete' voucher.id %}"
+                                       class="btn btn-sm btn-danger" title="Delete"
+                                       onclick="return confirm('Delete this voucher?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                {% endif %}
+                                <a href="{% url 'attendance:attendance_export_excel' voucher.id %}"
+                                   class="btn btn-sm btn-success" title="Export Excel">
+                                    <i class="fas fa-file-excel"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <i class="fas fa-calendar fa-3x text-muted"></i>
+                            <p class="mt-2">No attendance vouchers found.</p>
+                            <a href="{% url 'attendance:attendance_voucher_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create Your First Voucher
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.client %}&client={{ request.GET.client }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.client %}&client={{ request.GET.client }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.client %}&client={{ request.GET.client }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.client %}&client={{ request.GET.client }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        <div class="text-muted mt-2">
+            <i class="fas fa-info-circle"></i> Total Vouchers: {{ page_obj.paginator.count }}
+        </div>
+    </div>
+</div>
+{% endblock %}

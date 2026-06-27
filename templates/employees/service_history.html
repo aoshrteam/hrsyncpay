@@ -1,0 +1,231 @@
+<!-- templates/employees/service_history.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Service History - {{ employee.name }}{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'employees:employee_list' %}">Employees</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'employees:employee_detail' employee.id %}">{{ employee.name }}</a></li>
+    <li class="breadcrumb-item active">Service History</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-history"></i> Service History - {{ employee.name }}</h4>
+    <div>
+        <a href="{% url 'employees:employee_detail' employee.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+        <a href="#" class="btn btn-success" onclick="window.print()">
+            <i class="fas fa-print"></i> Print
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-clock"></i> Total Service</h6>
+                <h2 class="mb-0">{{ total_service }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-briefcase"></i> Total Assignments</h6>
+                <h2 class="mb-0">{{ total_assignments }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-building"></i> Total Clients</h6>
+                <h2 class="mb-0">{{ total_clients }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h6 class="card-title"><i class="fas fa-user-check"></i> Current Client</h6>
+                <h5 class="mb-0">{{ current_assignment.client.name|default:"None" }}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Employee Info -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-user"></i> Employee Information</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <strong>Name:</strong> {{ employee.name }}
+            </div>
+            <div class="col-md-3">
+                <strong>Employee Code:</strong> {{ employee.employee_code }}
+            </div>
+            <div class="col-md-3">
+                <strong>Master Code:</strong> {{ employee.master_code|default:"-" }}
+            </div>
+            <div class="col-md-3">
+                <strong>Date of Joining:</strong> {{ employee.date_of_joining|date:"d-M-Y" }}
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-3">
+                <strong>Email:</strong> {{ employee.email }}
+            </div>
+            <div class="col-md-3">
+                <strong>Phone:</strong> {{ employee.phone }}
+            </div>
+            <div class="col-md-3">
+                <strong>PAN:</strong> {{ employee.pan_number|default:"-" }}
+            </div>
+            <div class="col-md-3">
+                <strong>Aadhaar:</strong> {{ employee.aadhaar_number|default:"-" }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assignment History Table -->
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-list"></i> Assignment History</h6>
+        <small class="text-muted">{{ total_assignments }} assignments</small>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Client</th>
+                        <th>Assignment Code</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Effective Date</th>
+                        <th>Salary Method</th>
+                        <th>Salary Heads</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in assignments %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <a href="{% url 'clients:client_detail' assignment.client.id %}">
+                                {{ assignment.client.name }}
+                            </a>
+                        </td>
+                        <td><code>{{ assignment.assignment_code|default:"-" }}</code></td>
+                        <td>{{ assignment.start_date|date:"d-M-Y" }}</td>
+                        <td>{{ assignment.end_date|date:"d-M-Y"|default:"Present" }}</td>
+                        <td>{{ assignment.effective_date|date:"d-M-Y" }}</td>
+                        <td>{{ assignment.get_salary_method_display }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#heads-{{ forloop.counter }}">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <div class="collapse mt-2" id="heads-{{ forloop.counter }}">
+                                <div class="card card-body bg-light">
+                                    <small>
+                                        <strong>Basic:</strong> ₹{{ assignment.monthly_basic|default:0|floatformat:2 }}<br>
+                                        <strong>Special Allowance:</strong> ₹{{ assignment.special_allowance|default:0|floatformat:2 }}<br>
+                                        <strong>Conveyance:</strong> ₹{{ assignment.conveyance_allowance|default:0|floatformat:2 }}<br>
+                                        <strong>Other Allowance:</strong> ₹{{ assignment.other_allowance|default:0|floatformat:2 }}<br>
+                                        <strong>PF Cap:</strong> {{ assignment.get_pf_cap_display }}<br>
+                                        <strong>ESI Rule:</strong> {{ assignment.get_esi_rule_display }}
+                                    </small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if assignment.is_current %}
+                                <span class="badge bg-success">Current</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Past</span>
+                            {% endif %}
+                            <br>
+                            <small class="text-muted">{{ assignment.get_status_display }}</small>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <i class="fas fa-history fa-3x text-muted"></i>
+                            <p class="mt-2">No assignments found for this employee.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Client Summary -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-building"></i> Client-wise Summary</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for client_data in client_summary %}
+            <div class="col-md-3 mb-3">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <h6>{{ client_data.client.name }}</h6>
+                        <p class="mb-0">
+                            <span class="badge bg-primary">
+                                {{ client_data.count }} Assignments
+                            </span>
+                        </p>
+                        <small class="text-muted">
+                            {% if client_data.is_current %}
+                                <span class="badge bg-success">Current</span>
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center text-muted">
+                No clients found
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Print Styles -->
+<style>
+@media print {
+    .btn, .navbar, .footer, .breadcrumb {
+        display: none !important;
+    }
+    .card {
+        border: 1px solid #ddd !important;
+        break-inside: avoid;
+    }
+    .card-header {
+        background-color: #f8f9fa !important;
+    }
+    body {
+        padding: 20px !important;
+    }
+}
+</style>
+{% endblock %}

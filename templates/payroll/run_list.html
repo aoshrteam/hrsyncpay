@@ -1,0 +1,214 @@
+<!-- templates/payroll/run_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payroll Runs - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item active">Payroll Runs</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-calculator"></i> Payroll Runs</h4>
+    <div>
+        <a href="{% url 'payroll:run_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Payroll Run
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <select name="client" class="form-control">
+                    <option value="">All Clients</option>
+                    {% for client in clients %}
+                        <option value="{{ client.id }}" {% if request.GET.client == client.id|stringformat:"s" %}selected{% endif %}>
+                           {{ client.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-control">
+                    <option value="">All Status</option>
+                    {% for status_code, status_label in status_choices %}
+                        <option value="{{ status_code }}" {% if request.GET.status == status_code %}selected{% endif %}>
+                            {{ status_label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'payroll:run_list' %}" class="btn btn-secondary w-100">
+                    <i class="fas fa-undo"></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Payroll Runs Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Run Number</th>
+                        <th>Month</th>
+                        <th>Client</th>
+                        <th>Employees</th>
+                        <th>Gross Salary</th>
+                        <th>Net Payable</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for run in page_obj %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            {% if run.id %}
+                                <a href="{% url 'payroll:run_detail' run.id %}">
+                                    <code>{{ run.run_number }}</code>
+                                </a>
+                            {% else %}
+                                <code>{{ run.run_number }}</code>
+                            {% endif %}
+                        </td>
+                        <td>{{ run.month_year|date:"M Y" }}</td>
+                        <td>{{ run.client.name|default:"All Clients" }}</td>
+                        <td>{{ run.total_employees }}</td>
+                        <td>₹{{ run.total_gross_salary|floatformat:2 }}</td>
+                        <td>₹{{ run.total_net_payable|floatformat:2 }}</td>
+                        <td>
+                            {% if run.status == 'DRAFT' %}
+                                <span class="badge bg-secondary">Draft</span>
+                            {% elif run.status == 'PROCESSING' %}
+                                <span class="badge bg-primary">Processing</span>
+                            {% elif run.status == 'PROCESSED' %}
+                                <span class="badge bg-info">Processed</span>
+                            {% elif run.status == 'FINALIZED' %}
+                                <span class="badge bg-success">Finalized</span>
+                            {% elif run.status == 'PAID' %}
+                                <span class="badge bg-warning">Paid</span>
+                            {% elif run.status == 'CANCELLED' %}
+                                <span class="badge bg-danger">Cancelled</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <!-- View Button -->
+                                {% if run.id %}
+                                    <a href="{% url 'payroll:run_detail' run.id %}"
+                                       class="btn btn-sm btn-info" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                {% endif %}
+
+                                <!-- Process Button -->
+                                {% if run.status == 'DRAFT' or run.status == 'PROCESSING' %}
+                                    {% if run.id %}
+                                        <a href="{% url 'payroll:run_process' run.id %}"
+                                           class="btn btn-sm btn-success" title="Process"
+                                           onclick="return confirm('Process this payroll run?')">
+                                            <i class="fas fa-play"></i>
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+
+                                <!-- Finalize Button -->
+                                {% if run.status == 'PROCESSED' %}
+                                    {% if run.id %}
+                                        <a href="{% url 'payroll:run_finalize' run.id %}"
+                                           class="btn btn-sm btn-primary" title="Finalize"
+                                           onclick="return confirm('Finalize this payroll run? This will generate challans.')">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+
+                                <!-- Delete Button -->
+                                {% if run.status == 'DRAFT' or run.status == 'PROCESSED' or run.status == 'CANCELLED' %}
+                                    {% if run.id %}
+                                        <a href="{% url 'payroll:run_delete' run.id %}"
+                                           class="btn btn-sm btn-danger" title="Delete"
+                                           onclick="return confirm('Delete this payroll run?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <i class="fas fa-calculator fa-3x text-muted"></i>
+                            <p class="mt-2">No payroll runs found.</p>
+                            <a href="{% url 'payroll:run_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create Your First Payroll Run
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.client %}&client={{ request.GET.client }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.client %}&client={{ request.GET.client }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.client %}&client={{ request.GET.client }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.client %}&client={{ request.GET.client }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        <div class="text-muted mt-2">
+            <i class="fas fa-info-circle"></i> Total Payroll Runs: {{ page_obj.paginator.count }}
+        </div>
+    </div>
+</div>
+{% endblock %}

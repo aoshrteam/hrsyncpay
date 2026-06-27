@@ -1,0 +1,258 @@
+<!-- templates/payments/payment_batch_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Edit{% else %}Create{% endif %} Payment Batch{% endblock %}
+
+{% block page_header %}
+<div class="d-flex justify-content-between align-items-center">
+    <h1 class="h3 mb-0">{% if is_edit %}Edit{% else %}Create{% endif %} Payment Batch</h1>
+    <a href="{% url 'payments:payment_batch_list' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to List
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <form method="post" id="paymentBatchForm">
+            {% csrf_token %}
+
+            <!-- Basic Information -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Basic Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.payroll_run.id_for_label }}">Payroll Run *</label>
+                                {{ form.payroll_run }}
+                                {% if form.payroll_run.errors %}
+                                <div class="text-danger">{{ form.payroll_run.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.payment_date.id_for_label }}">Payment Date *</label>
+                                {{ form.payment_date }}
+                                {% if form.payment_date.errors %}
+                                <div class="text-danger">{{ form.payment_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.payment_method.id_for_label }}">Payment Method *</label>
+                                {{ form.payment_method }}
+                                {% if form.payment_method.errors %}
+                                <div class="text-danger">{{ form.payment_method.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ledger Accounts -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Ledger Accounts</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.debit_ledger.id_for_label }}">Debit Ledger (Salary Payable) *</label>
+                                {{ form.debit_ledger }}
+                                <small class="form-text text-muted">{{ form.debit_ledger.help_text }}</small>
+                                {% if form.debit_ledger.errors %}
+                                <div class="text-danger">{{ form.debit_ledger.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.credit_ledger.id_for_label }}">Credit Ledger (Bank/Cash) *</label>
+                                {{ form.credit_ledger }}
+                                <small class="form-text text-muted">{{ form.credit_ledger.help_text }}</small>
+                                {% if form.credit_ledger.errors %}
+                                <div class="text-danger">{{ form.credit_ledger.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employees Section -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Employees with Pending Payments</h5>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-secondary" id="selectAllEmployees">
+                            <i class="fas fa-check-square"></i> Select All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-secondary" id="deselectAllEmployees">
+                            <i class="fas fa-square"></i> Deselect All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-info" id="setPartialPayments">
+                            <i class="fas fa-percent"></i> Set Partial Payments
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="employeeTable">
+                            <thead>
+                                <tr>
+                                    <th width="40">
+                                        <input type="checkbox" id="selectAllEmployeesCheckbox">
+                                    </th>
+                                    <th>Employee Code</th>
+                                    <th>Employee Name</th>
+                                    <th>Total Due (₹)</th>
+                                    <th>Paid Amount (₹)</th>
+                                    <th>Pending Amount (₹)</th>
+                                    <th>Amount to Pay (₹)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if pending_employees %}
+                                {% for emp in pending_employees %}
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" name="employee_ids" value="{{ emp.id }}"
+                                               class="employee-checkbox" data-payslip-id="{{ emp.payslip_id }}"
+                                               data-total-due="{{ emp.total_due }}" data-pending="{{ emp.pending_amount }}">
+                                    </td>
+                                    <td>{{ emp.employee_code }}</td>
+                                    <td>{{ emp.employee_name }}</td>
+                                    <td class="text-right total-due">{{ emp.total_due|floatformat:2 }}</td>
+                                    <td class="text-right paid-amount">{{ emp.paid_amount|floatformat:2 }}</td>
+                                    <td class="text-right pending-amount">{{ emp.pending_amount|floatformat:2 }}</td>
+                                    <td>
+                                        <input type="number" name="amounts" class="form-control form-control-sm payment-amount"
+                                               step="0.01" min="0" max="{{ emp.pending_amount }}"
+                                               value="{% if emp.is_partial %}{{ emp.pending_amount }}{% else %}{{ emp.total_due }}{% endif %}">
+                                        <input type="hidden" name="payslip_ids" value="{{ emp.payslip_id }}">
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{% if emp.is_partial %}warning{% else %}info{% endif %}">
+                                            {% if emp.is_partial %}Partial{% else %}Full{% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">
+                                        No pending employees found for this payroll run.
+                                        <br>
+                                        <a href="#" id="refreshEmployees" class="btn btn-sm btn-primary mt-2">
+                                            <i class="fas fa-sync"></i> Refresh
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Options -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Additional Options</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="{{ form.notes.id_for_label }}">Notes</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                        <div class="text-danger">{{ form.notes.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="autoProcess" name="auto_process">
+                        <label class="form-check-label" for="autoProcess">
+                            Automatically process payments after creation (creates vouchers immediately)
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> {% if is_edit %}Update{% else %}Create{% endif %} Batch
+                </button>
+                <a href="{% url 'payments:payment_batch_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Select all employees
+    $('#selectAllEmployeesCheckbox').change(function() {
+        $('.employee-checkbox').prop('checked', this.checked);
+        updatePaymentAmounts();
+    });
+
+    // Individual employee checkbox
+    $('.employee-checkbox').change(function() {
+        $(this).closest('tr').find('.payment-amount').prop('disabled', !this.checked);
+        if (!this.checked) {
+            $(this).closest('tr').find('.payment-amount').val('');
+        } else {
+            var pending = parseFloat($(this).data('pending'));
+            $(this).closest('tr').find('.payment-amount').val(pending.toFixed(2));
+        }
+    });
+
+    // Payment amount validation
+    $('.payment-amount').on('input', function() {
+        var val = parseFloat($(this).val()) || 0;
+        var max = parseFloat($(this).closest('tr').find('.employee-checkbox').data('pending'));
+        if (val > max) {
+            $(this).val(max.toFixed(2));
+        }
+        if (val < 0) {
+            $(this).val(0);
+        }
+    });
+
+    // Auto-select all employees when payroll run changes
+    $('#id_payroll_run').change(function() {
+        var url = "{% url 'payments:api_payroll_run_pending' 0 %}".replace('0', $(this).val());
+        $.get(url, function(data) {
+            if (data.employees.length > 0) {
+                // Reload page with selected payroll run
+                window.location.href = "{% url 'payments:payment_batch_create' %}?payroll_run=" + $(this).val();
+            }
+        });
+    });
+});
+
+function updatePaymentAmounts() {
+    $('.employee-checkbox:checked').each(function() {
+        var pending = parseFloat($(this).data('pending'));
+        $(this).closest('tr').find('.payment-amount').val(pending.toFixed(2));
+    });
+    $('.employee-checkbox:not(:checked)').each(function() {
+        $(this).closest('tr').find('.payment-amount').val('');
+    });
+}
+</script>
+{% endblock %}

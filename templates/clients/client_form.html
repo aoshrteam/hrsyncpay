@@ -1,0 +1,192 @@
+<!-- templates/clients/client_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - HRSyncPay{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle billing fields based on auto_billing_enabled
+function toggleBillingFields(checked) {
+    const billingFields = document.querySelectorAll('.billing-field');
+    billingFields.forEach(field => {
+        field.style.display = checked ? 'block' : 'none';
+    });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const checkbox = document.getElementById('id_auto_billing_enabled');
+    if (checkbox) {
+        toggleBillingFields(checkbox.checked);
+        checkbox.addEventListener('change', function() {
+            toggleBillingFields(this.checked);
+        });
+    }
+});
+
+// Validate pincode
+document.getElementById('id_pincode').addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '').slice(0, 6);
+});
+
+// Validate locations JSON
+document.getElementById('id_locations').addEventListener('blur', function() {
+    try {
+        if (this.value) {
+            JSON.parse(this.value);
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+        }
+    } catch (e) {
+        this.classList.remove('is-valid');
+        this.classList.add('is-invalid');
+    }
+});
+</script>
+{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'clients:client_list' %}">Clients</a></li>
+    <li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ title }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- Basic Details -->
+                    <h6 class="border-bottom pb-2 mb-3 text-primary">
+                        <i class="fas fa-info-circle"></i> Basic Details
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">{{ form.name|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ form.code|as_crispy_field }}</div>
+                    </div>
+
+                    <!-- Location Details -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-primary">
+                        <i class="fas fa-map-marker-alt"></i> Location Details
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-12">{{ form.address|as_crispy_field }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">{{ form.city|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.state|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.pincode|as_crispy_field }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">{{ form.country|as_crispy_field }}</div>
+                    </div>
+
+                    <!-- Contact Details -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-primary">
+                        <i class="fas fa-phone"></i> Contact Details
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">{{ form.contact_person|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.contact_email|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.contact_phone|as_crispy_field }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">{{ form.website|as_crispy_field }}</div>
+                    </div>
+
+                    <!-- GST Details -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-success">
+                        <i class="fas fa-file-invoice"></i> GST Details
+                    </h6>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>GST Applicable:</strong> Auto-determined from GST State.
+                        {% if form.instance.gst_state %}
+                            ✅ GST is APPLICABLE
+                        {% else %}
+                            ❌ GST is NOT APPLICABLE
+                        {% endif %}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">{{ form.gst_number|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ form.gst_state|as_crispy_field }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">{{ form.pan_number|as_crispy_field }}</div>
+                    </div>
+
+                    <!-- Auto Billing Settings (New) -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-warning">
+                        <i class="fas fa-rocket"></i> Auto Billing Settings
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-12">{{ form.auto_billing_enabled|as_crispy_field }}</div>
+                    </div>
+
+                    <!-- Commission & Service Charge (Toggle based on Auto Billing) -->
+                    <div class="billing-field" style="display: none;">
+                        <h6 class="border-bottom pb-2 mb-3 mt-4 text-info">
+                            <i class="fas fa-percent"></i> Commission & Service Charge
+                            <small class="text-muted">(Only when Auto Billing is enabled)</small>
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-4">{{ form.commission_type|as_crispy_field }}</div>
+                            <div class="col-md-4">{{ form.commission_rate|as_crispy_field }}</div>
+                            <div class="col-md-4">{{ form.service_charge|as_crispy_field }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Terms -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-secondary">
+                        <i class="fas fa-hand-holding-usd"></i> Payment Terms
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">{{ form.payment_terms|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ form.credit_limit|as_crispy_field }}</div>
+                    </div>
+
+                    <!-- Locations (JSON) -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-primary">
+                        <i class="fas fa-location-dot"></i> Multiple Locations (JSON)
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-12">{{ form.locations|as_crispy_field }}</div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Example:</strong>
+                        <code>[{"name":"Branch 1","address":"123, Jaipur","city":"Jaipur","state":"Rajasthan","pincode":"302001"}]</code>
+                    </div>
+
+                    <!-- Status -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-secondary">
+                        <i class="fas fa-cog"></i> Status
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">{{ form.is_active|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ form.notes|as_crispy_field }}</div>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> {{ button_text }}
+                        </button>
+                        <a href="{% url 'clients:client_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

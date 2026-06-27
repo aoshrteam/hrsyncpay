@@ -1,0 +1,75 @@
+<!-- templates/leave/leave_balance.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Leave Balance - {{ employee.name }}{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'employees:employee_list' %}">Employees</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'employees:employee_detail' employee.id %}">{{ employee.name }}</a></li>
+    <li class="breadcrumb-item active">Leave Balance</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-balance-scale"></i> Leave Balance - {{ employee.name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Leave Type</th>
+                                <th>Financial Year</th>
+                                <th>Total Days</th>
+                                <th>Used Days</th>
+                                <th>Balance Days</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for balance in balances %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ balance.leave_type.name }}</td>
+                                <td>{{ balance.financial_year }}</td>
+                                <td>{{ balance.total_days|floatformat:1 }}</td>
+                                <td>{{ balance.used_days|floatformat:1 }}</td>
+                                <td>
+                                    {% if balance.balance_days > 0 %}
+                                        <span class="badge bg-success">{{ balance.balance_days|floatformat:1 }}</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">{{ balance.balance_days|floatformat:1 }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if balance.balance_days > 0 %}
+                                        <span class="badge bg-success">Available</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Exhausted</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="fas fa-balance-scale fa-3x text-muted"></i>
+                                    <p class="mt-2">No leave balance found.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

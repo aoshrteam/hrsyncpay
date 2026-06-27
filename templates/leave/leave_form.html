@@ -1,0 +1,65 @@
+<!-- templates/leave/leave_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'leave:leave_list' %}">Employee Leaves</a></li>
+    <li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleHalfDay() {
+    const halfDayCheck = document.getElementById('id_is_half_day');
+    const halfDayType = document.getElementById('id_half_day_type');
+    if (halfDayCheck.checked) {
+        halfDayType.style.display = 'block';
+        halfDayType.parentElement.style.display = 'block';
+    } else {
+        halfDayType.style.display = 'none';
+        halfDayType.parentElement.style.display = 'none';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    toggleHalfDay();
+    document.getElementById('id_is_half_day').addEventListener('change', toggleHalfDay);
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ title }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Note:</strong> Leave balance will be auto-updated on approval.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> {{ button_text }}
+                        </button>
+                        <a href="{% url 'leave:leave_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

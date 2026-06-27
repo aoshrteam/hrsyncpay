@@ -1,0 +1,152 @@
+<!-- templates/payheads/payhead_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payheads - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    {% if client %}
+        <li class="breadcrumb-item"><a href="{% url 'clients:client_detail' client.id %}">{{ client.name }}</a></li>
+    {% endif %}
+    <li class="breadcrumb-item active">Payheads</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-list"></i> Payhead Templates</h4>
+    <div>
+        <a href="{% url 'payheads:payhead_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Payhead
+        </a>
+        <a href="{% url 'payheads:category_list' %}" class="btn btn-secondary">
+            <i class="fas fa-tags"></i> Categories
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">{{ payheads|length }}</h5>
+                <p class="card-text text-muted">Total Payheads</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-success">{{ earnings|length }}</h5>
+                <p class="card-text text-muted">Earnings</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-danger">{{ deductions|length }}</h5>
+                <p class="card-text text-muted">Deductions</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-info">{{ others|length }}</h5>
+                <p class="card-text text-muted">Other</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payhead Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Client</th>
+                        <th>Category</th>
+                        <th>Calculation</th>
+                        <th>Default Value</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payhead in payheads %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <strong>{{ payhead.name }}</strong>
+                            {% if payhead.code %}
+                                <br><small class="text-muted">{{ payhead.code }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge
+                                {% if payhead.type == 'EARNING' %}bg-success
+                                {% elif payhead.type == 'DEDUCTION' %}bg-danger
+                                {% elif payhead.type == 'ALLOWANCE' %}bg-info
+                                {% elif payhead.type == 'BONUS' %}bg-warning
+                                {% elif payhead.type == 'REIMBURSEMENT' %}bg-orange
+                                {% else %}bg-secondary
+                                {% endif %}">
+                                {{ payhead.get_type_display }}
+                            </span>
+                        </td>
+                        <td>{{ payhead.client.name }}</td>
+                        <td>
+                            {% if payhead.category %}
+                                {{ payhead.category.name }}
+                            {% else %}
+                                <span class="text-muted">Uncategorized</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ payhead.get_calculation_type_display }}</span>
+                        </td>
+                        <td>₹{{ payhead.default_value|floatformat:2 }}</td>
+                        <td>
+                            {% if payhead.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'payheads:payhead_edit' payhead.id %}"
+                                   class="btn btn-sm btn-warning" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'payheads:payhead_delete' payhead.id %}"
+                                   class="btn btn-sm btn-danger" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <i class="fas fa-list fa-3x text-muted"></i>
+                            <p class="mt-2">No payheads found.</p>
+                            <a href="{% url 'payheads:payhead_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add Your First Payhead
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

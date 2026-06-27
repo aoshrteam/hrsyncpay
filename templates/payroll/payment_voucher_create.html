@@ -1,0 +1,162 @@
+<!-- templates/payroll/payment_voucher_create.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Create Payment - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'payroll:payment_voucher_list' %}">Payment Vouchers</a></li>
+    <li class="breadcrumb-item active">Create Payment</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-hand-holding-usd"></i> Create Payment Voucher</h5>
+            </div>
+            <div class="card-body">
+                <!-- Step 1: Select Payroll Run -->
+                <form method="get" class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Select Payroll Run</label>
+                        <select name="payroll_run" class="form-control" onchange="this.form.submit()">
+                            <option value="">-- Select Payroll Run --</option>
+                            {% for run in payroll_runs %}
+                                <option value="{{ run.id }}" {% if selected_payroll_run.id == run.id %}selected{% endif %}>
+                                    {{ run.run_number }} - {{ run.month_year|date:"F Y" }}
+                                    ({{ run.client.name|default:"All Clients" }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <a href="{% url 'payroll:payment_voucher_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                    </div>
+                </form>
+
+                <!-- Step 2: Select Employees -->
+                {% if selected_payroll_run %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>{{ selected_payroll_run.run_number }}</strong>
+                            - {{ selected_payroll_run.month_year|date:"F Y" }}
+                            ({{ selected_payroll_run.client.name|default:"All Clients" }})
+                            <br>
+                            Total Employees: {{ payslips|length }} | Total Net Payable: ₹{{ selected_payroll_run.total_net_payable|floatformat:2 }}
+                        </div>
+
+                        <input type="hidden" name="payroll_run" value="{{ selected_payroll_run.id }}">
+
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 5%;">
+                                            <input type="checkbox" id="select-all" checked>
+                                        </th>
+                                        <th style="width: 5%;">#</th>
+                                        <th>Employee</th>
+                                        <th>Code</th>
+                                        <th>Gross Salary</th>
+                                        <th>Deductions</th>
+                                        <th>Net Payable</th>
+                                        <th>Payment Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payslip in payslips %}
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" name="select_{{ payslip.employee.id }}"
+                                                   class="employee-select" checked>
+                                        </td>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ payslip.employee.name }}</td>
+                                        <td><code>{{ payslip.employee.employee_code }}</code></td>
+                                        <td>₹{{ payslip.gross_earnings|floatformat:2 }}</td>
+                                        <td>₹{{ payslip.total_deductions|floatformat:2 }}</td>
+                                        <td><strong>₹{{ payslip.net_pay|floatformat:2 }}</strong></td>
+                                        <td>
+                                            <input type="number" name="emp_{{ payslip.employee.id }}"
+                                                   class="form-control payment-amount"
+                                                   value="{{ payslip.net_pay|floatformat:2 }}"
+                                                   step="0.01" min="0" max="{{ payslip.net_pay|floatformat:2 }}"
+                                                   data-max="{{ payslip.net_pay }}">
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4">
+                                            <i class="fas fa-users fa-3x text-muted"></i>
+                                            <p class="mt-2">No employees found for this payroll run.</p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="alert alert-success">
+                                    <strong>Total Selected Amount:</strong>
+                                    <span id="total-amount">₹0.00</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-arrow-right"></i> Next - Confirm Payment
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Select All
+    document.getElementById('select-all').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.employee-select');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+        updateTotal();
+    });
+
+    // Update total on amount change or checkbox change
+    document.querySelectorAll('.payment-amount').forEach(input => {
+        input.addEventListener('input', updateTotal);
+    });
+    document.querySelectorAll('.employee-select').forEach(cb => {
+        cb.addEventListener('change', updateTotal);
+    });
+
+    function updateTotal() {
+        let total = 0;
+        document.querySelectorAll('.employee-select').forEach(cb => {
+            if (cb.checked) {
+                const row = cb.closest('tr');
+                const amountInput = row.querySelector('.payment-amount');
+                if (amountInput) {
+                    total += parseFloat(amountInput.value) || 0;
+                }
+            }
+        });
+        document.getElementById('total-amount').textContent = '₹' + total.toFixed(2);
+    }
+
+    // Initial update
+    updateTotal();
+});
+</script>
+{% endblock %}

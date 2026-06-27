@@ -1,0 +1,196 @@
+<!-- templates/clients/client_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ client.name }} - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'clients:client_list' %}">Clients</a></li>
+    <li class="breadcrumb-item active">{{ client.name }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-building"></i> Client Info</h6>
+            </div>
+            <div class="card-body">
+                <h5>{{ client.name }}</h5>
+                <p class="text-muted">
+                    <code>{{ client.code }}</code>
+                    <br>
+                    <span class="badge {% if client.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                        {% if client.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </p>
+
+                <hr>
+
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <th><i class="fas fa-map-marker-alt"></i> Address:</th>
+                        <td>
+                            {{ client.address }}
+                            {% if client.city %}, {{ client.city }}{% endif %}
+                            {% if client.state %}, {{ client.state }}{% endif %}
+                            {% if client.pincode %} - {{ client.pincode }}{% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><i class="fas fa-user"></i> Contact:</th>
+                        <td>{{ client.contact_person|default:"N/A" }}</td>
+                    </tr>
+                    <tr>
+                        <th><i class="fas fa-envelope"></i> Email:</th>
+                        <td>{{ client.contact_email|default:"N/A" }}</td>
+                    </tr>
+                    <tr>
+                        <th><i class="fas fa-phone"></i> Phone:</th>
+                        <td>{{ client.contact_phone|default:"N/A" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- GST Info Card -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-file-invoice"></i> GST Details</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <th>GST Number:</th>
+                        <td>{{ client.gst_number|default:"N/A" }}</td>
+                    </tr>
+                    <tr>
+                        <th>GST State:</th>
+                        <td>{{ client.gst_state|default:"N/A" }}</td>
+                    </tr>
+                    <tr>
+                        <th>GST Applicable:</th>
+                        <td>
+                            {% if client.gst_applicable %}
+                                <span class="badge bg-success">Yes</span>
+                            {% else %}
+                                <span class="badge bg-secondary">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>PAN Number:</th>
+                        <td>{{ client.pan_number|default:"N/A" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Commission Card -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-percent"></i> Commission</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <th>Type:</th>
+                        <td>{{ client.get_commission_type_display }}</td>
+                    </tr>
+                    <tr>
+                        <th>Rate:</th>
+                        <td>
+                            {{ client.commission_rate }}
+                            {% if client.commission_type == 'PERCENTAGE' %}%{% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Service Charge:</th>
+                        <td>{{ client.service_charge }}%</td>
+                    </tr>
+                    <tr>
+                        <th>Payment Terms:</th>
+                        <td>{{ client.payment_terms }} days</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <!-- Employee List -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-users"></i> Assigned Employees</h6>
+                <a href="#" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus"></i> Add Employee
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Employee</th>
+                                <th>Code</th>
+                                <th>Salary Method</th>
+                                <th>PF</th>
+                                <th>ESI</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in client.assignments.all %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <a href="{% url 'employees:employee_detail' assignment.employee.id %}">
+                                        {{ assignment.employee.name }}
+                                    </a>
+                                </td>
+                                <td><code>{{ assignment.employee.employee_code }}</code></td>
+                                <td>{{ assignment.get_salary_method_display }}</td>
+                                <td>{{ assignment.get_pf_cap_display }}</td>
+                                <td>{{ assignment.get_esi_rule_display }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-3">
+                                    <i class="fas fa-users text-muted"></i>
+                                    <p class="mt-1">No employees assigned to this client yet.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Billing Info -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-file-invoice-dollar"></i> Billing Summary</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h6>Total Employees</h6>
+                        <h3>{{ client.assignments.count }}</h3>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Total Billed (Current Month)</h6>
+                        <h3>₹0</h3>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Pending Payment</h6>
+                        <h3 class="text-warning">₹0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,522 @@
+<!-- templates/employees/assignment_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - HRSyncPay{% endblock %}
+
+{% block extra_js %}
+<script>
+// ============================================
+// CLIENT CHANGE - Load Templates
+// ============================================
+let currentClientId = {{ form.client.value|default:'null' }};
+
+document.getElementById('id_client').addEventListener('change', function() {
+    const clientId = this.value;
+    if (clientId) {
+        loadClientTemplates(clientId);
+        currentClientId = clientId;
+    } else {
+        document.getElementById('earnings-container').innerHTML = '';
+        document.getElementById('deductions-container').innerHTML = '';
+    }
+});
+
+function loadClientTemplates(clientId) {
+    fetch(`/clients/api/payhead-templates/?client_id=${clientId}`)
+        .then(response => response.json())
+        .then(data => {
+            // Clear existing
+            document.getElementById('earnings-container').innerHTML = '';
+            document.getElementById('deductions-container').innerHTML = '';
+
+            // Load Earnings
+            if (data.earnings) {
+                data.earnings.forEach((head, index) => {
+                    addEarningWithValue(head.name, head.amount || 0, head.id);
+                });
+            }
+
+            // Load Deductions
+            if (data.deductions) {
+                data.deductions.forEach((head, index) => {
+                    addDeductionWithValue(head.name, head.amount || 0, head.id);
+                });
+            }
+
+            // Show info message
+            const infoDiv = document.getElementById('template-info');
+            if (data.earnings.length === 0 && data.deductions.length === 0) {
+                infoDiv.innerHTML = '<div class="alert alert-info">No payhead templates found for this client. You can add new ones.</div>';
+            } else {
+                infoDiv.innerHTML = `<div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    Loaded ${data.earnings.length} earnings and ${data.deductions.length} deductions from client template.
+                    <br><small class="text-muted">These payheads are shared across all assignments for this client.</small>
+                </div>`;
+            }
+        })
+        .catch(error => console.error('Error loading templates:', error));
+}
+
+// ============================================
+// EARNINGS - Dynamic Heads with Delete Protection
+// ============================================
+let earningCount = {{ form.instance.salary_heads.earnings|length|default:0 }};
+
+function addEarning() {
+    earningCount++;
+    const container = document.getElementById('earnings-container');
+    const row = document.createElement('div');
+    row.className = 'dynamic-row earning-row';
+    row.id = 'earning-' + earningCount;
+    row.innerHTML = `
+        <div class="row mb-2">
+            <div class="col-md-5">
+                <input type="text" name="earning_name_{{ earningCount }}" class="form-control"
+                       placeholder="Head Name (e.g., Bonus, DA, Incentive)" required>
+            </div>
+            <div class="col-md-4">
+                <input type="number" name="earning_amount_{{ earningCount }}" class="form-control"
+                       step="0.01" placeholder="Amount" required>
+            </div>
+            <div class="col-md-3">
+                <button type="button" class="btn btn-sm btn-success" onclick="saveToTemplate('earning', this)">
+                    <i class="fas fa-save"></i> Save as Template
+                </button>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeEarning({{ earningCount }})">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    container.appendChild(row);
+}
+
+function addEarningWithValue(name, amount, templateId) {
+    earningCount++;
+    const container = document.getElementById('earnings-container');
+    const row = document.createElement('div');
+    row.className = 'dynamic-row earning-row template-earning';
+    row.id = 'earning-' + earningCount;
+    row.dataset.templateId = templateId || '';
+    row.innerHTML = `
+        <div class="row mb-2">
+            <div class="col-md-5">
+                <input type="text" name="earning_name_{{ earningCount }}" class="form-control"
+                       value="${name}" placeholder="Head Name" required>
+            </div>
+            <div class="col-md-4">
+                <input type="number" name="earning_amount_{{ earningCount }}" class="form-control"
+                       step="0.01" value="${amount}" placeholder="Amount" required>
+            </div>
+            <div class="col-md-3">
+                <button type="button" class="btn btn-sm btn-warning" onclick="removeTemplate('earning', ${templateId}, this)"
+                        title="Delete from template">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+                <span class="badge bg-info template-badge">Template</span>
+            </div>
+        </div>
+    `;
+    container.appendChild(row);
+}
+
+function removeEarning(id) {
+    const row = document.getElementById('earning-' + id);
+    if (row) {
+        // Check if it's a template earning
+        if (row.classList.contains('template-earning')) {
+            const templateId = row.dataset.templateId;
+            if (templateId) {
+                // Check usage
+                fetch(`/clients/api/check-payhead-usage/?template_id=${templateId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.in_use) {
+                            alert(`Cannot delete "${data.name}" - It is being used in ${data.usage_count} other assignment(s).`);
+                        } else {
+                            if (confirm(`Delete "${data.name}" from template?`)) {
+                                removeTemplate('earning', templateId);
+                            }
+                        }
+                    });
+            }
+        } else {
+            row.remove();
+        }
+    }
+}
+
+// ============================================
+// DEDUCTIONS - Dynamic Heads with Delete Protection
+// ============================================
+let deductionCount = {{ form.instance.salary_heads.deductions|length|default:0 }};
+
+function addDeduction() {
+    deductionCount++;
+    const container = document.getElementById('deductions-container');
+    const row = document.createElement('div');
+    row.className = 'dynamic-row deduction-row';
+    row.id = 'deduction-' + deductionCount;
+    row.innerHTML = `
+        <div class="row mb-2">
+            <div class="col-md-5">
+                <input type="text" name="deduction_name_{{ deductionCount }}" class="form-control"
+                       placeholder="Deduction Name (e.g., Insurance, Advance)" required>
+            </div>
+            <div class="col-md-4">
+                <input type="number" name="deduction_amount_{{ deductionCount }}" class="form-control"
+                       step="0.01" placeholder="Amount" required>
+            </div>
+            <div class="col-md-3">
+                <button type="button" class="btn btn-sm btn-success" onclick="saveToTemplate('deduction', this)">
+                    <i class="fas fa-save"></i> Save as Template
+                </button>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeDeduction({{ deductionCount }})">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    container.appendChild(row);
+}
+
+function addDeductionWithValue(name, amount, templateId) {
+    deductionCount++;
+    const container = document.getElementById('deductions-container');
+    const row = document.createElement('div');
+    row.className = 'dynamic-row deduction-row template-deduction';
+    row.id = 'deduction-' + deductionCount;
+    row.dataset.templateId = templateId || '';
+    row.innerHTML = `
+        <div class="row mb-2">
+            <div class="col-md-5">
+                <input type="text" name="deduction_name_{{ deductionCount }}" class="form-control"
+                       value="${name}" placeholder="Deduction Name" required>
+            </div>
+            <div class="col-md-4">
+                <input type="number" name="deduction_amount_{{ deductionCount }}" class="form-control"
+                       step="0.01" value="${amount}" placeholder="Amount" required>
+            </div>
+            <div class="col-md-3">
+                <button type="button" class="btn btn-sm btn-warning" onclick="removeTemplate('deduction', ${templateId}, this)"
+                        title="Delete from template">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+                <span class="badge bg-info template-badge">Template</span>
+            </div>
+        </div>
+    `;
+    container.appendChild(row);
+}
+
+function removeDeduction(id) {
+    const row = document.getElementById('deduction-' + id);
+    if (row) {
+        if (row.classList.contains('template-deduction')) {
+            const templateId = row.dataset.templateId;
+            if (templateId) {
+                fetch(`/clients/api/check-payhead-usage/?template_id=${templateId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.in_use) {
+                            alert(`Cannot delete "${data.name}" - It is being used in ${data.usage_count} other assignment(s).`);
+                        } else {
+                            if (confirm(`Delete "${data.name}" from template?`)) {
+                                removeTemplate('deduction', templateId);
+                            }
+                        }
+                    });
+            }
+        } else {
+            row.remove();
+        }
+    }
+}
+
+// ============================================
+// SAVE TO TEMPLATE
+// ============================================
+function saveToTemplate(type, button) {
+    const row = button.closest('.row').parentElement;
+    const nameInput = row.querySelector('input[type="text"]');
+    const amountInput = row.querySelector('input[type="number"]');
+
+    if (!nameInput.value || !amountInput.value) {
+        alert('Please fill both name and amount before saving to template.');
+        return;
+    }
+
+    const clientId = document.getElementById('id_client').value;
+    if (!clientId) {
+        alert('Please select a client first.');
+        return;
+    }
+
+    fetch('/clients/api/save-payhead-template/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify({
+            client_id: clientId,
+            name: nameInput.value,
+            type: type.toUpperCase(),
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✓ Saved to template successfully! This will be available for all assignments of this client.');
+            // Mark as template
+            row.closest('.dynamic-row').classList.add('template-' + type);
+            row.closest('.dynamic-row').dataset.templateId = data.template_id;
+            // Add template badge
+            const actionsDiv = row.querySelector('.col-md-3');
+            const saveBtn = actionsDiv.querySelector('.btn-success');
+            saveBtn.outerHTML = `<button type="button" class="btn btn-sm btn-warning" onclick="removeTemplate('${type}', ${data.template_id}, this)">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+                <span class="badge bg-info template-badge">Template</span>`;
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+
+// ============================================
+// REMOVE FROM TEMPLATE
+// ============================================
+function removeTemplate(type, templateId, button) {
+    if (!confirm('Remove this payhead from client template? It will remain in existing assignments.')) {
+        return;
+    }
+
+    fetch('/clients/api/remove-payhead-template/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify({
+            template_id: templateId,
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const row = button.closest('.row').parentElement;
+            // Remove template badge and convert to regular
+            row.classList.remove('template-' + type);
+            row.dataset.templateId = '';
+            const actionsDiv = row.querySelector('.col-md-3');
+            const warnBtn = actionsDiv.querySelector('.btn-warning');
+            warnBtn.outerHTML = `<button type="button" class="btn btn-sm btn-success" onclick="saveToTemplate('${type}', this)">
+                    <i class="fas fa-save"></i> Save as Template
+                </button>`;
+            const badge = actionsDiv.querySelector('.template-badge');
+            if (badge) badge.remove();
+            alert('✓ Removed from template successfully!');
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+
+// ============================================
+// GET CSRF TOKEN
+// ============================================
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+// ============================================
+// EPS TOGGLE
+// ============================================
+function toggleEPS() {
+    const epsCheck = document.getElementById('id_eps_applicable');
+    const epsFields = document.querySelectorAll('.eps-field');
+    if (epsCheck) {
+        epsFields.forEach(field => {
+            field.style.display = epsCheck.checked ? 'block' : 'none';
+        });
+    }
+}
+
+// ============================================
+// FORM SUBMIT - Collect Dynamic Data
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    toggleEPS();
+    document.getElementById('id_eps_applicable').addEventListener('change', toggleEPS);
+
+    // Load templates if client already selected
+    const clientSelect = document.getElementById('id_client');
+    if (clientSelect && clientSelect.value) {
+        loadClientTemplates(clientSelect.value);
+    }
+});
+
+document.getElementById('assignment-form').addEventListener('submit', function(e) {
+    // Collect Earnings
+    const earnings = {};
+    document.querySelectorAll('.earning-row').forEach(row => {
+        const nameInput = row.querySelector('input[name^="earning_name_"]');
+        const amountInput = row.querySelector('input[name^="earning_amount_"]');
+        if (nameInput && amountInput && nameInput.value && amountInput.value) {
+            earnings[nameInput.value] = parseFloat(amountInput.value) || 0;
+        }
+    });
+
+    // Collect Deductions
+    const deductions = {};
+    document.querySelectorAll('.deduction-row').forEach(row => {
+        const nameInput = row.querySelector('input[name^="deduction_name_"]');
+        const amountInput = row.querySelector('input[name^="deduction_amount_"]');
+        if (nameInput && amountInput && nameInput.value && amountInput.value) {
+            deductions[nameInput.value] = parseFloat(amountInput.value) || 0;
+        }
+    });
+
+    // Set JSON in hidden field
+    const salaryHeads = {
+        earnings: earnings,
+        deductions: deductions
+    };
+    document.getElementById('id_salary_heads').value = JSON.stringify(salaryHeads);
+});
+</script>
+
+<style>
+.template-badge {
+    font-size: 0.6rem;
+    margin-left: 5px;
+}
+.template-earning, .template-deduction {
+    background: #e8f5e9;
+    border-left: 3px solid #4caf50;
+    padding-left: 10px;
+    border-radius: 5px;
+}
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'employees:employee_list' %}">Employees</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'employees:employee_detail' employee.id %}">{{ employee.name }}</a></li>
+    <li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ title }} - {{ employee.name }}</h5>
+            </div>
+            <div class="card-body">
+                <div id="template-info"></div>
+
+                <form method="post" id="assignment-form">
+                    {% csrf_token %}
+
+                    <!-- Basic Details -->
+                    <h6 class="border-bottom pb-2 mb-3 text-primary">
+                        <i class="fas fa-info-circle"></i> Basic Details
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">{{ form.client|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.start_date|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.end_date|as_crispy_field }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">{{ form.effective_date|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ form.status|as_crispy_field }}</div>
+                    </div>
+
+                    <!-- Salary Configuration -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-success">
+                        <i class="fas fa-money-bill-wave"></i> Salary Configuration
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">{{ form.salary_method|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.monthly_basic|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.per_day_rate|as_crispy_field }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">{{ form.rate_per_unit|as_crispy_field }}</div>
+                    </div>
+
+                    <!-- Dynamic Earnings -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-success">
+                        <i class="fas fa-plus-circle"></i> Earnings (Dynamic)
+                        <button type="button" class="btn btn-sm btn-success float-end" onclick="addEarning()">
+                            <i class="fas fa-plus"></i> Add Earning
+                        </button>
+                    </h6>
+                    <div id="earnings-container">
+                        <!-- Dynamic earnings will be added here -->
+                    </div>
+
+                    <!-- Dynamic Deductions -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-danger">
+                        <i class="fas fa-minus-circle"></i> Deductions (Dynamic)
+                        <button type="button" class="btn btn-sm btn-danger float-end" onclick="addDeduction()">
+                            <i class="fas fa-plus"></i> Add Deduction
+                        </button>
+                    </h6>
+                    <div id="deductions-container">
+                        <!-- Dynamic deductions will be added here -->
+                    </div>
+
+                    <!-- Fixed Deduction -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">{{ form.other_deductions|as_crispy_field }}</div>
+                    </div>
+
+                    <!-- Statutory Rules -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-danger">
+                        <i class="fas fa-shield-alt"></i> Statutory Rules
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">{{ form.pf_cap|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.esi_rule|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.professional_tax_exempt|as_crispy_field }}</div>
+                    </div>
+
+                    <!-- EPS Settings -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-info">
+                        <i class="fas fa-pension"></i> EPS (Pension) Settings
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-12">{{ form.eps_applicable|as_crispy_field }}</div>
+                    </div>
+                    <div class="eps-field">
+                        <div class="row">
+                            <div class="col-md-6">{{ form.eps_employer_rate|as_crispy_field }}</div>
+                            <div class="col-md-6">{{ form.eps_limit|as_crispy_field }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden Field -->
+                    {{ form.salary_heads }}
+
+                    <!-- Submit -->
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> {{ button_text }}
+                        </button>
+                        <a href="{% url 'employees:employee_detail' employee.id %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

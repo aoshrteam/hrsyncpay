@@ -1,0 +1,60 @@
+<!-- templates/statutory/challan_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Challans - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item active">Challans</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-file-invoice"></i> Statutory Challans</h4>
+    <div>
+        <a href="#" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Generate Challan
+        </a>
+    </div>
+</div>
+
+<!-- Challan Types -->
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-shield-alt text-primary"></i> PF Challans</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Provident Fund challans for employees</p>
+                <a href="#" class="btn btn-sm btn-primary">View PF Challans</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-medkit text-success"></i> ESI Challans</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">ESI challans for employees</p>
+                <a href="#" class="btn btn-sm btn-success">View ESI Challans</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-tax text-warning"></i> PT Challans</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Professional Tax challans</p>
+                <a href="#" class="btn btn-sm btn-warning">View PT Challans</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

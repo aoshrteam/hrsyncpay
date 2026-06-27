@@ -1,0 +1,6 @@
+<!-- templates/attendance/widgets/month_year_widget.html -->
+<input type="month" name="{{ widget.name }}"
+       value="{{ widget.value|date:'Y-m'|default:'' }}"
+       class="form-control"
+       id="{{ widget.attrs.id }}"
+       {% if widget.attrs.placeholder %}placeholder="{{ widget.attrs.placeholder }}"{% endif %}>

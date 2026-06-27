@@ -1,0 +1,337 @@
+<!-- templates/payroll/payslip_pdf.html -->
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Payslip - {{ payslip.employee.name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            margin: 0;
+            color: #1a237e;
+        }
+        .header p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .company-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .employee-info {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+        }
+        .employee-info table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .employee-info td {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .employee-info .label {
+            font-weight: bold;
+            width: 30%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #1a237e;
+            color: white;
+            font-weight: bold;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #e8eaf6;
+        }
+        .net-pay {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a237e;
+            text-align: center;
+            padding: 15px;
+            border: 2px solid #1a237e;
+            margin-top: 20px;
+            background: #e8eaf6;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            font-size: 10px;
+            color: #999;
+        }
+        .signature {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .signature div {
+            width: 45%;
+        }
+        .signature .line {
+            border-bottom: 1px solid #333;
+            margin-top: 30px;
+            padding-bottom: 5px;
+        }
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>HRSyncPay</h2>
+        <p>Payroll Management System</p>
+        <p><strong>SALARY SLIP</strong></p>
+    </div>
+
+    <div class="company-info">
+        <p><strong>Company:</strong> {{ payslip.payroll_run.client.name|default:"All Clients" }}</p>
+        <p><strong>Payroll Month:</strong> {{ payslip.payroll_run.month_year|date:"F Y" }}</p>
+        <p><strong>Payroll Run:</strong> {{ payslip.payroll_run.run_number }}</p>
+    </div>
+
+    <!-- Employee Info -->
+    <div class="employee-info">
+        <table>
+            <tr>
+                <td class="label">Employee Name:</td>
+                <td>{{ payslip.employee.name }}</td>
+                <td class="label">Employee Code:</td>
+                <td>{{ payslip.employee.employee_code }}</td>
+            </tr>
+            <tr>
+                <td class="label">Master Code:</td>
+                <td>{{ payslip.employee.master_code|default:"-" }}</td>
+                <td class="label">PAN Number:</td>
+                <td>{{ payslip.employee.pan_number|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td class="label">PF Number:</td>
+                <td>{{ payslip.employee.pf_number|default:"-" }}</td>
+                <td class="label">ESI Number:</td>
+                <td>{{ payslip.employee.esi_number|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td class="label">Bank Name:</td>
+                <td>{{ payslip.employee.bank_name|default:"-" }}</td>
+                <td class="label">Bank Account:</td>
+                <td>{{ payslip.employee.bank_account_number|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td class="label">Client:</td>
+                <td>{{ payslip.assignment.client.name|default:"-" }}</td>
+                <td class="label">Assignment Code:</td>
+                <td>{{ payslip.assignment.assignment_code|default:"-" }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Earnings Table -->
+    <table>
+        <thead>
+            <tr>
+                <th colspan="2">EARNINGS</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Basic Pay</td>
+                <td class="text-right">₹{{ payslip.basic_pay|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Allowance</td>
+                <td class="text-right">₹{{ payslip.allowance|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Incentive</td>
+                <td class="text-right">₹{{ payslip.incentive|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Conveyance</td>
+                <td class="text-right">₹{{ payslip.conveyance|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Overtime</td>
+                <td class="text-right">₹{{ payslip.overtime|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Other Earnings</td>
+                <td class="text-right">₹{{ payslip.other_earnings|floatformat:2 }}</td>
+            </tr>
+            <tr class="total-row">
+                <td><strong>Gross Earnings</strong></td>
+                <td class="text-right"><strong>₹{{ payslip.gross_earnings|floatformat:2 }}</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Deductions Table -->
+    <table>
+        <thead>
+            <tr>
+                <th colspan="2">DEDUCTIONS</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>PF (Employee)</td>
+                <td class="text-right">₹{{ payslip.pf_employee|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>ESI (Employee)</td>
+                <td class="text-right">₹{{ payslip.esi_employee|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Professional Tax</td>
+                <td class="text-right">₹{{ payslip.professional_tax|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>TDS</td>
+                <td class="text-right">₹{{ payslip.tds|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Loan Deduction</td>
+                <td class="text-right">₹{{ payslip.loan_deduction|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Advance Deduction</td>
+                <td class="text-right">₹{{ payslip.advance_deduction|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Other Deductions</td>
+                <td class="text-right">₹{{ payslip.other_deductions|floatformat:2 }}</td>
+            </tr>
+            <tr class="total-row">
+                <td><strong>Total Deductions</strong></td>
+                <td class="text-right"><strong>₹{{ payslip.total_deductions|floatformat:2 }}</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- PF Details -->
+    {% if payslip.pf_basic > 0 %}
+    <table>
+        <thead>
+            <tr>
+                <th colspan="2">PF DETAILS</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>PF Basic</td>
+                <td class="text-right">₹{{ payslip.pf_basic|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>PF Employer</td>
+                <td class="text-right">₹{{ payslip.pf_employer|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>EPS Employer</td>
+                <td class="text-right">₹{{ payslip.eps_employer|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Admin Charges</td>
+                <td class="text-right">₹{{ payslip.admin_charges|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>EDLIS Charges</td>
+                <td class="text-right">₹{{ payslip.edlis_charges|floatformat:2 }}</td>
+            </tr>
+        </tbody>
+    </table>
+    {% endif %}
+
+    <!-- Loan Details -->
+    {% if payslip.loan_details %}
+    <table>
+        <thead>
+            <tr>
+                <th colspan="2">LOAN DETAILS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for loan_name, amount in payslip.loan_details.items %}
+            <tr>
+                <td>{{ loan_name }}</td>
+                <td class="text-right">₹{{ amount|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <!-- Net Pay -->
+    <div class="net-pay">
+        Net Pay: ₹{{ payslip.net_pay|floatformat:2 }}
+    </div>
+
+    <!-- Signature -->
+    <div class="signature">
+        <div>
+            <p><strong>Employee Signature</strong></p>
+            <div class="line"></div>
+            <p style="font-size: 10px; color: #999;">Date: ______________</p>
+        </div>
+        <div>
+            <p><strong>Authorized Signatory</strong></p>
+            <div class="line"></div>
+            <p style="font-size: 10px; color: #999;">Date: ______________</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>This is a system generated payslip. Generated on: {% now "d-M-Y H:i" %}</p>
+        <p>HRSyncPay &copy; {% now "Y" %} - All Rights Reserved</p>
+    </div>
+
+    <!-- Print Button -->
+    <div class="no-print" style="text-align: center; margin-top: 20px;">
+        <button onclick="window.print()" style="padding: 10px 30px; background: #1a237e; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            <i class="fas fa-print"></i> Print / Download PDF
+        </button>
+        <button onclick="window.close()" style="padding: 10px 30px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+            <i class="fas fa-times"></i> Close
+        </button>
+    </div>
+
+    <script>
+        // Auto print on load (optional)
+        // window.onload = function() { window.print(); }
+    </script>
+</body>
+</html>

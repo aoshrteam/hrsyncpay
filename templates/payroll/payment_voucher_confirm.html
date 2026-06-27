@@ -1,0 +1,102 @@
+<!-- templates/payroll/payment_voucher_confirm.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Confirm Payment - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'payroll:payment_voucher_list' %}">Payment Vouchers</a></li>
+    <li class="breadcrumb-item active">Confirm Payment</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-check-circle"></i> Confirm Payment</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>Payroll Run:</strong> {{ payroll_run.run_number }}
+                    ({{ payroll_run.month_year|date:"F Y" }})
+                    <br>
+                    <strong>Total Employees:</strong> {{ employees_data|length }}
+                    <br>
+                    <strong>Total Amount:</strong> ₹{{ total_amount|floatformat:2 }}
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Payment Date *</label>
+                                <input type="date" name="payment_date" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Payment Type *</label>
+                                <select name="payment_type" class="form-control" required>
+                                    <option value="">-- Select --</option>
+                                    {% for code, label in payment_types %}
+                                        <option value="{{ code }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="Enter notes"></textarea>
+                    </div>
+
+                    <h6 class="border-bottom pb-2 mb-3">Employee-wise Payment</h6>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Employee</th>
+                                    <th>Code</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in employees_data %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ data.employee.name }}</td>
+                                    <td><code>{{ data.employee.employee_code }}</code></td>
+                                    <td><strong>₹{{ data.amount|floatformat:2 }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="3" class="text-end">Total:</th>
+                                    <th>₹{{ total_amount|floatformat:2 }}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-check"></i> Confirm & Create Voucher
+                        </button>
+                        <a href="{% url 'payroll:payment_voucher_create' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Go Back
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

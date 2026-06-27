@@ -1,0 +1,678 @@
+<!-- templates/employees/employee_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - HRSyncPay{% endblock %}
+
+{% block extra_css %}
+<style>
+    .collapsible-section {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        overflow: hidden;
+    }
+    .section-header {
+        background: #f8f9fa;
+        padding: 10px 18px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        user-select: none;
+    }
+    .section-header:hover {
+        background: #e9ecef;
+    }
+    .section-header .toggle-icon {
+        font-size: 1.1rem;
+        color: #6c757d;
+    }
+    .section-body {
+        padding: 15px 20px;
+    }
+    .section-body.collapsed {
+        display: none;
+    }
+    .dynamic-row {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 8px;
+        border-left: 3px solid #0d6efd;
+    }
+    .form-group {
+        margin-bottom: 0.8rem;
+    }
+    .form-group label {
+        font-weight: 500;
+        font-size: 0.9rem;
+        margin-bottom: 0.2rem;
+        display: block;
+    }
+    .form-group .form-control {
+        border-radius: 6px;
+        border: 1px solid #ced4da;
+        padding: 0.4rem 0.8rem;
+        width: 100%;
+        font-size: 0.9rem;
+    }
+    .form-group .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-top: 0.5rem;
+    }
+    .form-check .form-check-input {
+        width: 16px;
+        height: 16px;
+        margin-top: 0;
+    }
+    .help-text {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.15rem;
+    }
+    .error-text {
+        color: #dc3545;
+        font-size: 0.8rem;
+        margin-top: 0.15rem;
+    }
+    .alert-info {
+        background: #e3f2fd;
+        border: 1px solid #90caf9;
+        border-radius: 6px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+    }
+    .badge-required {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleSection(id) {
+    const body = document.getElementById(id);
+    const icon = document.getElementById(id + '-icon');
+    if (body) {
+        body.classList.toggle('collapsed');
+        if (icon) {
+            icon.className = body.classList.contains('collapsed') ? 'fas fa-plus toggle-icon' : 'fas fa-minus toggle-icon';
+        }
+    }
+}
+
+let headCount = 0;
+function addSalaryHead() {
+    headCount++;
+    const container = document.getElementById('salary-heads-container');
+    const row = document.createElement('div');
+    row.className = 'dynamic-row';
+    row.id = 'head-' + headCount;
+    row.innerHTML = `
+        <div class="row">
+            <div class="col-md-5">
+                <input type="text" name="dynamic_salary_heads_key_${headCount}" class="form-control" placeholder="Head name (e.g., Bonus)">
+            </div>
+            <div class="col-md-5">
+                <input type="number" name="dynamic_salary_heads_value_${headCount}" class="form-control" step="0.01" placeholder="Amount">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('head-${headCount}').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    container.appendChild(row);
+}
+
+let dedCount = 0;
+function addDeduction() {
+    dedCount++;
+    const container = document.getElementById('deductions-container');
+    const row = document.createElement('div');
+    row.className = 'dynamic-row';
+    row.id = 'ded-' + dedCount;
+    row.innerHTML = `
+        <div class="row">
+            <div class="col-md-5">
+                <input type="text" name="dynamic_deductions_key_${dedCount}" class="form-control" placeholder="Deduction name (e.g., Insurance)">
+            </div>
+            <div class="col-md-5">
+                <input type="number" name="dynamic_deductions_value_${dedCount}" class="form-control" step="0.01" placeholder="Amount">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('ded-${dedCount}').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    container.appendChild(row);
+}
+
+function addDocumentField() {
+    const container = document.getElementById('documents-container');
+    const row = document.createElement('div');
+    row.className = 'dynamic-row';
+    row.innerHTML = `
+        <div class="row">
+            <div class="col-md-4">
+                <select name="document_type[]" class="form-control">
+                    <option value="AADHAR">Aadhar Card</option>
+                    <option value="PAN">PAN Card</option>
+                    <option value="EDUCATION_10TH">10th Certificate</option>
+                    <option value="EDUCATION_12TH">12th Certificate</option>
+                    <option value="EDUCATION_GRADUATION">Graduation</option>
+                    <option value="PREVIOUS_EMPLOYMENT">Previous Employment</option>
+                    <option value="EXPERIENCE_LETTER">Experience Letter</option>
+                    <option value="SALARY_SLIP">Salary Slip</option>
+                    <option value="APPOINTMENT_LETTER">Appointment Letter</option>
+                    <option value="BANK_STATEMENT">Bank Statement</option>
+                    <option value="PF_CARD">PF Card</option>
+                    <option value="ESI_CARD">ESI Card</option>
+                    <option value="MEDICAL">Medical Certificate</option>
+                    <option value="OTHER">Other</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <input type="file" name="document_file[]" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+            </div>
+            <div class="col-md-3">
+                <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.dynamic-row').remove()">
+                    <i class="fas fa-times"></i> Remove
+                </button>
+            </div>
+        </div>
+    `;
+    container.appendChild(row);
+}
+
+function previewPhoto(input) {
+    const preview = document.getElementById('photo-preview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'employees:employee_list' %}">Employees</a></li>
+    <li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ title }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- SECTION 1: PERSONAL DETAILS -->
+                    <div class="collapsible-section">
+                        <div class="section-header" onclick="toggleSection('sec-personal')">
+                            <h6 class="mb-0"><i class="fas fa-user text-primary"></i> Personal Details</h6>
+                            <i class="fas fa-minus toggle-icon" id="sec-personal-icon"></i>
+                        </div>
+                        <div class="section-body" id="sec-personal">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.name.label }} <span class="badge-required">*</span></label>
+                                        {{ form.name }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.employee_code.label }} <span class="badge-required">*</span></label>
+                                        {{ form.employee_code }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.father_name.label }}</label>
+                                        {{ form.father_name }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.mother_name.label }}</label>
+                                        {{ form.mother_name }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.date_of_birth.label }}</label>
+                                        {{ form.date_of_birth }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.gender.label }}</label>
+                                        {{ form.gender }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.date_of_joining.label }}</label>
+                                        {{ form.date_of_joining }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group form-check">
+                                        {{ form.is_active }}
+                                        <label>{{ form.is_active.label }}</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: CONTACT DETAILS -->
+                    <div class="collapsible-section">
+                        <div class="section-header" onclick="toggleSection('sec-contact')">
+                            <h6 class="mb-0"><i class="fas fa-address-book text-success"></i> Contact Details</h6>
+                            <i class="fas fa-minus toggle-icon" id="sec-contact-icon"></i>
+                        </div>
+                        <div class="section-body" id="sec-contact">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.email.label }}</label>
+                                        {{ form.email }}
+                                        <div class="help-text">Optional</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.phone.label }}</label>
+                                        {{ form.phone }}
+                                        <div class="help-text">Optional</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>{{ form.alternate_phone.label }}</label>
+                                        {{ form.alternate_phone }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.current_address.label }}</label>
+                                        {{ form.current_address }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.permanent_address.label }}</label>
+                                        {{ form.permanent_address }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3: STATUTORY IDs -->
+                    <div class="collapsible-section">
+                        <div class="section-header" onclick="toggleSection('sec-statutory')">
+                            <h6 class="mb-0"><i class="fas fa-id-card text-warning"></i> Statutory IDs</h6>
+                            <i class="fas fa-minus toggle-icon" id="sec-statutory-icon"></i>
+                        </div>
+                        <div class="section-body" id="sec-statutory">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>{{ form.pan_number.label }}</label>
+                                        {{ form.pan_number }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>{{ form.aadhaar_number.label }}</label>
+                                        {{ form.aadhaar_number }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>{{ form.uan_number.label }}</label>
+                                        {{ form.uan_number }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.pf_number.label }}</label>
+                                        {{ form.pf_number }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.esi_number.label }}</label>
+                                        {{ form.esi_number }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 4: BANK DETAILS -->
+                    <div class="collapsible-section">
+                        <div class="section-header" onclick="toggleSection('sec-bank')">
+                            <h6 class="mb-0"><i class="fas fa-university text-info"></i> Bank Details</h6>
+                            <i class="fas fa-minus toggle-icon" id="sec-bank-icon"></i>
+                        </div>
+                        <div class="section-body" id="sec-bank">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.bank_name.label }}</label>
+                                        {{ form.bank_name }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.bank_branch.label }}</label>
+                                        {{ form.bank_branch }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.bank_account_number.label }}</label>
+                                        {{ form.bank_account_number }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.ifsc_code.label }}</label>
+                                        {{ form.ifsc_code }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 5: PHOTO & DOCUMENTS -->
+                    <div class="collapsible-section">
+                        <div class="section-header" onclick="toggleSection('sec-docs')">
+                            <h6 class="mb-0"><i class="fas fa-upload text-primary"></i> Photo & Documents</h6>
+                            <i class="fas fa-minus toggle-icon" id="sec-docs-icon"></i>
+                        </div>
+                        <div class="section-body" id="sec-docs">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.photo.label }}</label>
+                                        {{ form.photo }}
+                                        <div class="help-text">Upload profile photo</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <img id="photo-preview" src="#" alt="Photo Preview"
+                                         style="max-width: 120px; max-height: 120px; display: none; border-radius: 50%; border: 2px solid #ddd;">
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <label class="fw-bold">Documents</label>
+                                <div id="documents-container"></div>
+                                <button type="button" class="btn btn-sm btn-primary mt-2" onclick="addDocumentField()">
+                                    <i class="fas fa-plus"></i> Add Document
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 6: PF/ESI/TDS -->
+                    <div class="collapsible-section">
+                        <div class="section-header" onclick="toggleSection('sec-statutory-settings')">
+                            <h6 class="mb-0"><i class="fas fa-shield-alt text-danger"></i> PF / ESI / TDS Settings</h6>
+                            <i class="fas fa-minus toggle-icon" id="sec-statutory-settings-icon"></i>
+                        </div>
+                        <div class="section-body" id="sec-statutory-settings">
+                            <!-- PF -->
+                            <h6 class="text-warning">PF Settings</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group form-check">
+                                        {{ form.pf_applicable }}
+                                        <label>{{ form.pf_applicable.label }}</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>{{ form.pf_employee_rate.label }}</label>
+                                        {{ form.pf_employee_rate }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>{{ form.pf_employer_rate.label }}</label>
+                                        {{ form.pf_employer_rate }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>{{ form.pf_capping.label }}</label>
+                                        {{ form.pf_capping }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- EPS -->
+                            <h6 class="text-primary mt-3">EPS (Pension) Settings</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group form-check">
+                                        {{ form.eps_applicable }}
+                                        <label>{{ form.eps_applicable.label }}</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>{{ form.eps_employee_rate.label }}</label>
+                                        {{ form.eps_employee_rate }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>{{ form.eps_employer_rate.label }}</label>
+                                        {{ form.eps_employer_rate }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>{{ form.eps_limit.label }}</label>
+                                        {{ form.eps_limit }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ESI -->
+                            <h6 class="text-info mt-3">ESI Settings</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group form-check">
+                                        {{ form.esi_applicable }}
+                                        <label>{{ form.esi_applicable.label }}</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>{{ form.esi_rule.label }}</label>
+                                        {{ form.esi_rule }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>{{ form.esi_limit.label }}</label>
+                                        {{ form.esi_limit }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>{{ form.esi_employee_rate.label }}</label>
+                                        {{ form.esi_employee_rate }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>{{ form.esi_employer_rate.label }}</label>
+                                        {{ form.esi_employer_rate }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- TDS -->
+                            <h6 class="text-danger mt-3">TDS Settings</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group form-check">
+                                        {{ form.tds_applicable }}
+                                        <label>{{ form.tds_applicable.label }}</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>{{ form.tds_type.label }}</label>
+                                        {{ form.tds_type }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>{{ form.tds_value.label }}</label>
+                                        {{ form.tds_value }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 7: SALARY HEADS -->
+                    <div class="collapsible-section">
+                        <div class="section-header" onclick="toggleSection('sec-salary')">
+                            <h6 class="mb-0"><i class="fas fa-money-bill-wave text-success"></i> Salary Heads</h6>
+                            <i class="fas fa-minus toggle-icon" id="sec-salary-icon"></i>
+                        </div>
+                        <div class="section-body" id="sec-salary">
+                            <div class="alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Fixed:</strong> Basic Pay &amp; HRA &nbsp;|&nbsp;
+                                <strong>Add:</strong> Other heads using "Add Salary Head" button
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.basic_pay.label }}</label>
+                                        {{ form.basic_pay }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.hra.label }}</label>
+                                        {{ form.hra }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="salary-heads-container"></div>
+                            <button type="button" class="btn btn-sm btn-success mt-2" onclick="addSalaryHead()">
+                                <i class="fas fa-plus"></i> Add Salary Head
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 8: DEDUCTIONS -->
+                    <div class="collapsible-section">
+                        <div class="section-header" onclick="toggleSection('sec-deductions')">
+                            <h6 class="mb-0"><i class="fas fa-minus-circle text-danger"></i> Deductions</h6>
+                            <i class="fas fa-minus toggle-icon" id="sec-deductions-icon"></i>
+                        </div>
+                        <div class="section-body" id="sec-deductions">
+                            <div class="alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Fixed:</strong> TDS, Advance, Loan &nbsp;|&nbsp;
+                                <strong>Add:</strong> Other deductions using "Add Deduction" button
+                                <br><small>PF/ESI are auto-calculated during payroll processing</small>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>{{ form.tds_value.label }}</label>
+                                        {{ form.tds_value }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>{{ form.loan_deduction.label }}</label>
+                                        {{ form.loan_deduction }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>{{ form.advance_deduction.label }}</label>
+                                        {{ form.advance_deduction }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ form.professional_tax.label }}</label>
+                                        {{ form.professional_tax }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="deductions-container"></div>
+                            <button type="button" class="btn btn-sm btn-danger mt-2" onclick="addDeduction()">
+                                <i class="fas fa-plus"></i> Add Deduction
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- SUBMIT -->
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> {{ button_text }}
+                        </button>
+                        <a href="{% url 'employees:employee_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

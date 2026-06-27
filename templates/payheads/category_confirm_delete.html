@@ -1,0 +1,71 @@
+<!-- templates/payheads/category_confirm_delete.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Category - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'payheads:payhead_list' %}">Payheads</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'payheads:category_list' %}">Categories</a></li>
+    <li class="breadcrumb-item active">Delete Category</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Delete
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <i class="fas fa-trash-alt text-danger" style="font-size: 4rem;"></i>
+                </div>
+
+                <h5 class="text-center">Are you sure you want to delete this category?</h5>
+
+                <div class="alert alert-warning mt-3">
+                    <strong>Category:</strong> {{ category.name }}
+                    <br>
+                    <strong>Client:</strong> {{ category.client.name }}
+                    <br>
+                    <strong>Type:</strong> {{ category.get_category_type_display }}
+                    <br>
+                    <strong>Payheads:</strong> {{ category.payheads.count }}
+                </div>
+
+                {% if category.payheads.exists %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <strong>Warning:</strong> This category has {{ category.payheads.count }} payhead(s) associated with it.
+                        Deleting this category will remove the category association from these payheads.
+                        <ul class="mt-2">
+                            {% for payhead in category.payheads.all|slice:":5" %}
+                                <li>{{ payhead.name }}</li>
+                            {% endfor %}
+                            {% if category.payheads.count > 5 %}
+                                <li>... and {{ category.payheads.count|add:"-5" }} more</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="fas fa-trash"></i> Yes, Delete Category
+                        </button>
+                        <a href="{% url 'payheads:category_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

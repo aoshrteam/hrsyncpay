@@ -1,0 +1,195 @@
+<!-- templates/loans/loan_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Loan Detail - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'loans:loan_list' %}">Employee Loans</a></li>
+    <li class="breadcrumb-item active">{{ loan.employee.name }} - {{ loan.loan_type.name }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-hand-holding-usd"></i> Loan Details</h4>
+    <div>
+        {% if loan.status != 'CLOSED' and loan.status != 'CANCELLED' %}
+            <a href="{% url 'loans:loan_make_payment' loan.id %}" class="btn btn-success">
+                <i class="fas fa-hand-holding-usd"></i> Make Payment
+            </a>
+            <a href="{% url 'loans:loan_edit' loan.id %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+        {% endif %}
+        <a href="{% url 'loans:loan_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h6 class="card-title">Loan Amount</h6>
+                <h3 class="mb-0">₹{{ loan.loan_amount|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h6 class="card-title">Total Amount</h6>
+                <h3 class="mb-0">₹{{ loan.total_amount|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h6 class="card-title">Paid Amount</h6>
+                <h3 class="mb-0">₹{{ paid_amount|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <h6 class="card-title">Remaining Amount</h6>
+                <h3 class="mb-0">₹{{ remaining_amount|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loan Info -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-info-circle"></i> Loan Information</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <strong>Employee:</strong> {{ loan.employee.name }}
+                <br>
+                <small class="text-muted">{{ loan.employee.employee_code }}</small>
+            </div>
+            <div class="col-md-4">
+                <strong>Loan Type:</strong> {{ loan.loan_type.name }}
+                <br>
+                <small class="text-muted">{{ loan.loan_type.get_category_display }}</small>
+            </div>
+            <div class="col-md-4">
+                <strong>Status:</strong>
+                {% if loan.status == 'PENDING' %}
+                    <span class="badge bg-warning">Pending</span>
+                {% elif loan.status == 'ACTIVE' %}
+                    <span class="badge bg-primary">Active</span>
+                {% elif loan.status == 'CLOSED' %}
+                    <span class="badge bg-success">Closed</span>
+                {% elif loan.status == 'DEFAULTED' %}
+                    <span class="badge bg-danger">Defaulted</span>
+                {% elif loan.status == 'CANCELLED' %}
+                    <span class="badge bg-secondary">Cancelled</span>
+                {% endif %}
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-3">
+                <strong>Start Date:</strong> {{ loan.start_date|date:"d-M-Y" }}
+            </div>
+            <div class="col-md-3">
+                <strong>End Date:</strong> {{ loan.end_date|date:"d-M-Y" }}
+            </div>
+            <div class="col-md-3">
+                <strong>First Deduction:</strong> {{ loan.first_deduction_date|date:"d-M-Y" }}
+            </div>
+            <div class="col-md-3">
+                <strong>Installment Amount:</strong> ₹{{ loan.installment_amount|floatformat:2 }}
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-6">
+                <strong>Progress:</strong>
+                <div class="progress" style="height: 20px;">
+                    <div class="progress-bar {% if progress >= 100 %}bg-success{% else %}bg-info{% endif %}"
+                         role="progressbar"
+                         style="width: {{ progress }}%;"
+                         aria-valuenow="{{ progress }}"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                        {{ progress|floatformat:0 }}%
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <strong>Installments:</strong> {{ loan.paid_installments }} / {{ loan.total_installments }} paid
+            </div>
+        </div>
+        {% if loan.remarks %}
+            <hr>
+            <strong>Remarks:</strong> {{ loan.remarks }}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Deduction History -->
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-history"></i> Deduction History</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Month</th>
+                        <th>Installment No.</th>
+                        <th>Amount</th>
+                        <th>Principal</th>
+                        <th>Interest</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for deduction in deductions %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ deduction.month_year|date:"M Y" }}</td>
+                        <td>{{ deduction.installment_number }}</td>
+                        <td>₹{{ deduction.amount|floatformat:2 }}</td>
+                        <td>₹{{ deduction.principal_amount|floatformat:2 }}</td>
+                        <td>₹{{ deduction.interest_amount|floatformat:2 }}</td>
+                        <td>
+                            {% if deduction.deducted %}
+                                <span class="badge bg-success">Deducted</span>
+                            {% else %}
+                                <span class="badge bg-warning">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'loans:loan_deduction_detail' deduction.id %}"
+                               class="btn btn-sm btn-info" title="View">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-3">
+                            <i class="fas fa-history text-muted"></i>
+                            <p class="mt-1">No deductions recorded yet.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

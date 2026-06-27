@@ -1,0 +1,230 @@
+<!-- templates/company/company_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'company:company_list' %}">Companies</a></li>
+    <li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ title }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Basic Details -->
+                    <h6 class="border-bottom pb-2 mb-3 text-primary">
+                        <i class="fas fa-info-circle"></i> Basic Details
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.name|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.code|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.address|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.city|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.state|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.pincode|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.country|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- Contact Details -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-primary">
+                        <i class="fas fa-phone"></i> Contact Details
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.phone|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.email|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.website|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- Statutory Details -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-primary">
+                        <i class="fas fa-file-invoice"></i> Statutory Details
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.gst_number|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.pan_number|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.cin_number|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- Logo & Status -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-primary">
+                        <i class="fas fa-image"></i> Logo & Status
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.logo|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.is_active|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- PF Settings -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-success">
+                        <i class="fas fa-shield-alt"></i> PF Settings
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-3">
+                            {{ form.pf_applicable|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.pf_employee_rate|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.pf_employer_rate|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.pf_capping|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- ESI Settings -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-info">
+                        <i class="fas fa-medkit"></i> ESI Settings
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-3">
+                            {{ form.esi_applicable|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.esi_employee_rate|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.esi_employer_rate|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.esi_limit|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- GST Settings -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-warning">
+                        <i class="fas fa-tax"></i> GST Settings
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.gst_applicable|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.gst_rate|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.gst_type|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- TDS Settings -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-danger">
+                        <i class="fas fa-file-invoice-dollar"></i> TDS Settings
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.tds_applicable|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.tds_rate|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.tds_section|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- Financial Year -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-secondary">
+                        <i class="fas fa-calendar-alt"></i> Financial Year
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.financial_year_start|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.financial_year_end|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> {{ button_text }}
+                        </button>
+                        <a href="{% url 'company:company_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Preview logo before upload
+    document.getElementById('id_logo').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const preview = document.createElement('img');
+                preview.src = event.target.result;
+                preview.style.maxWidth = '200px';
+                preview.style.maxHeight = '200px';
+                preview.style.marginTop = '10px';
+                preview.style.borderRadius = '10px';
+                preview.style.border = '2px solid #ddd';
+
+                const container = document.getElementById('id_logo').parentNode;
+                const existing = container.querySelector('.logo-preview');
+                if (existing) existing.remove();
+
+                preview.classList.add('logo-preview');
+                container.appendChild(preview);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+{% endblock %}

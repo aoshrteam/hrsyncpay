@@ -1,0 +1,322 @@
+<!-- templates/employees/assignment_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - HRSyncPay{% endblock %}
+
+{% block extra_js %}
+<script>
+// ============================================
+// LOAD PAYHEADS FROM CLIENT
+// ============================================
+function loadPayheads(clientId) {
+    if (!clientId) return;
+
+    const container = document.getElementById('payheads-container');
+    container.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading payheads...</div>';
+
+    fetch(`/payheads/api/client-payheads/?client_id=${clientId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                container.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                return;
+            }
+
+            renderPayheads(data);
+        })
+        .catch(error => {
+            console.error('Error loading payheads:', error);
+            container.innerHTML = '<div class="alert alert-danger">Error loading payheads</div>';
+        });
+}
+
+// ============================================
+// RENDER PAYHEADS
+// ============================================
+function renderPayheads(data) {
+    const container = document.getElementById('payheads-container');
+    let html = '';
+
+    // Earnings
+    if (data.earnings && data.earnings.length > 0) {
+        html += `
+            <h6 class="mt-3 text-success">
+                <i class="fas fa-plus-circle"></i> Earnings
+            </h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Payhead</th>
+                            <th>Type</th>
+                            <th>Default Value</th>
+                            <th>Override Value</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        data.earnings.forEach(payhead => {
+            html += `
+                <tr>
+                    <td>
+                        <strong>${payhead.name}</strong>
+                        ${payhead.description ? `<br><small class="text-muted">${payhead.description}</small>` : ''}
+                    </td>
+                    <td><span class="badge bg-info">${payhead.calculation_type}</span></td>
+                    <td>₹${payhead.default_value}</td>
+                    <td>
+                        <input type="number"
+                               class="form-control form-control-sm override-input"
+                               data-payhead-id="${payhead.id}"
+                               placeholder="Leave blank for default"
+                               step="0.01">
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                onclick="applyOverride(${payhead.id})">
+                            Apply
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    // Deductions
+    if (data.deductions && data.deductions.length > 0) {
+        html += `
+            <h6 class="mt-3 text-danger">
+                <i class="fas fa-minus-circle"></i> Deductions
+            </h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Payhead</th>
+                            <th>Type</th>
+                            <th>Default Value</th>
+                            <th>Override Value</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        data.deductions.forEach(payhead => {
+            html += `
+                <tr>
+                    <td>
+                        <strong>${payhead.name}</strong>
+                        ${payhead.description ? `<br><small class="text-muted">${payhead.description}</small>` : ''}
+                    </td>
+                    <td><span class="badge bg-warning">${payhead.calculation_type}</span></td>
+                    <td>₹${payhead.default_value}</td>
+                    <td>
+                        <input type="number"
+                               class="form-control form-control-sm override-input"
+                               data-payhead-id="${payhead.id}"
+                               placeholder="Leave blank for default"
+                               step="0.01">
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                onclick="applyOverride(${payhead.id})">
+                            Apply
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    if (!html) {
+        html = '<div class="alert alert-info">No payheads configured for this client. <a href="/payheads/create/" class="alert-link">Add payheads</a></div>';
+    }
+
+    container.innerHTML = html;
+}
+
+// ============================================
+// APPLY OVERRIDE
+// ============================================
+function applyOverride(payheadId) {
+    const input = document.querySelector(`.override-input[data-payhead-id="${payheadId}"]`);
+    const value = input.value;
+
+    if (!value) {
+        alert('Please enter an override value');
+        return;
+    }
+
+    // You can add AJAX here to save overrides immediately
+    // Or collect all overrides on form submit
+
+    // For now, just highlight the row
+    const row = input.closest('tr');
+    row.style.backgroundColor = '#fff3cd';
+
+    // Add hidden input for form submission
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = `override_${payheadId}`;
+    hiddenInput.value = value;
+    document.getElementById('assignment-form').appendChild(hiddenInput);
+
+    alert(`Override value ₹${value} applied for payhead ID ${payheadId}`);
+}
+
+// ============================================
+// INITIALIZE
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if client is pre-selected
+    const clientSelect = document.getElementById('id_client');
+    if (clientSelect && clientSelect.value) {
+        loadPayheads(clientSelect.value);
+    }
+
+    // EPS toggle
+    const epsCheck = document.getElementById('id_eps_applicable');
+    if (epsCheck) {
+        epsCheck.addEventListener('change', function() {
+            document.querySelectorAll('.eps-field').forEach(el => {
+                el.style.display = this.checked ? 'block' : 'none';
+            });
+        });
+        // Initial toggle
+        epsCheck.dispatchEvent(new Event('change'));
+    }
+});
+</script>
+{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'employees:employee_list' %}">Employees</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'employees:employee_detail' employee.id %}">{{ employee.name }}</a></li>
+    <li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ title }} - {{ employee.name }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="assignment-form" novalidate>
+                    {% csrf_token %}
+
+                    <!-- ========================================== -->
+                    <!-- BASIC DETAILS -->
+                    <!-- ========================================== -->
+                    <h6 class="border-bottom pb-2 mb-3 text-primary">
+                        <i class="fas fa-info-circle"></i> Basic Details
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">{{ form.client|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.start_date|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.end_date|as_crispy_field }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">{{ form.effective_date|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ form.status|as_crispy_field }}</div>
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- SALARY CONFIGURATION -->
+                    <!-- ========================================== -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-success">
+                        <i class="fas fa-money-bill-wave"></i> Salary Configuration
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">{{ form.salary_method|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.monthly_basic|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.per_day_rate|as_crispy_field }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">{{ form.rate_per_unit|as_crispy_field }}</div>
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- PAYHEADS FROM CLIENT -->
+                    <!-- ========================================== -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-primary">
+                        <i class="fas fa-list"></i> Payheads (Client Level)
+                        <a href="/payheads/create/" class="btn btn-sm btn-outline-primary float-end" target="_blank">
+                            <i class="fas fa-plus"></i> Manage Payheads
+                        </a>
+                    </h6>
+                    <div id="payheads-container">
+                        <div class="alert alert-info">Select a client to load payheads</div>
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- FIXED DEDUCTION -->
+                    <!-- ========================================== -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">{{ form.other_deductions|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ form.professional_tax_exempt|as_crispy_field }}</div>
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- STATUTORY RULES -->
+                    <!-- ========================================== -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-danger">
+                        <i class="fas fa-shield-alt"></i> Statutory Rules
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">{{ form.pf_cap|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.esi_rule|as_crispy_field }}</div>
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- EPS (PENSION) SETTINGS -->
+                    <!-- ========================================== -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-info">
+                        <i class="fas fa-pension"></i> EPS (Pension) Settings
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-12">{{ form.eps_applicable|as_crispy_field }}</div>
+                    </div>
+                    <div class="eps-field">
+                        <div class="row">
+                            <div class="col-md-6">{{ form.eps_employer_rate|as_crispy_field }}</div>
+                            <div class="col-md-6">{{ form.eps_limit|as_crispy_field }}</div>
+                        </div>
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- SUBMIT BUTTONS -->
+                    <!-- ========================================== -->
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> {{ button_text }}
+                        </button>
+                        <a href="{% url 'employees:employee_detail' employee.id %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,175 @@
+<!-- templates/attendance/attendance_voucher_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ voucher.voucher_number }} - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'attendance:attendance_voucher_list' %}">Attendance</a></li>
+    <li class="breadcrumb-item active">{{ voucher.voucher_number }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="fas fa-calendar-check"></i> {{ voucher.voucher_number }}</h4>
+    <div>
+        {% if voucher.status == 'DRAFT' %}
+            <a href="{% url 'attendance:attendance_voucher_edit' voucher.id %}" class="btn btn-warning">
+                <i class="fas fa-user-plus"></i> Add Employee
+            </a>
+            <a href="{% url 'attendance:attendance_voucher_import' voucher.id %}" class="btn btn-success">
+                <i class="fas fa-file-import"></i> Import Excel
+            </a>
+            <a href="{% url 'attendance:attendance_voucher_finalize' voucher.id %}" class="btn btn-primary"
+               onclick="return confirm('Finalize this voucher?')">
+                <i class="fas fa-check"></i> Finalize
+            </a>
+        {% endif %}
+        <a href="{% url 'attendance:attendance_export_excel' voucher.id %}" class="btn btn-info">
+            <i class="fas fa-file-excel"></i> Export
+        </a>
+        <a href="{% url 'attendance:attendance_voucher_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h6 class="card-title">Total Employees</h6>
+                <h2 class="mb-0">{{ details|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h6 class="card-title">Total Present Days</h6>
+                <h2 class="mb-0">{{ total_present|floatformat:0 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h6 class="card-title">Total Absent Days</h6>
+                <h2 class="mb-0">{{ total_absent|floatformat:0 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h6 class="card-title">Total Overtime Hours</h6>
+                <h2 class="mb-0">{{ total_overtime|floatformat:0 }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Voucher Info -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <strong>Voucher Number:</strong> {{ voucher.voucher_number }}
+            </div>
+            <div class="col-md-4">
+                <strong>Month:</strong> {{ voucher.month_year|date:"F Y" }}
+            </div>
+            <div class="col-md-4">
+                <strong>Client:</strong> {{ voucher.client.name }}
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-4">
+                <strong>Status:</strong>
+                {% if voucher.status == 'DRAFT' %}
+                    <span class="badge bg-warning">Draft</span>
+                {% elif voucher.status == 'FINALIZED' %}
+                    <span class="badge bg-success">Finalized</span>
+                {% else %}
+                    <span class="badge bg-info">Processed</span>
+                {% endif %}
+            </div>
+            <div class="col-md-4">
+                <strong>Created By:</strong> {{ voucher.created_by.username|default:"System" }}
+            </div>
+            <div class="col-md-4">
+                <strong>Created On:</strong> {{ voucher.created_at|date:"d-M-Y H:i" }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Details Table -->
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="fas fa-users"></i> Employee Attendance</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Employee</th>
+                        <th>Code</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                        <th>Leave</th>
+                        <th>Overtime</th>
+                        <th>Production</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detail in details %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ detail.employee.name }}</td>
+                        <td><code>{{ detail.employee.employee_code }}</code></td>
+                        <td>{{ detail.days_present|floatformat:0 }}</td>
+                        <td>{{ detail.days_absent|floatformat:0 }}</td>
+                        <td>{{ detail.days_leave|floatformat:0 }}</td>
+                        <td>{{ detail.overtime_hours|floatformat:0 }}</td>
+                        <td>{{ detail.production_units }}</td>
+                        <td>
+                            {% if voucher.status == 'DRAFT' %}
+                                <form method="post" action="{% url 'attendance:attendance_detail_delete' detail.id %}"
+                                      style="display: inline;"
+                                      onsubmit="return confirm('Delete this record?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted"></i>
+                            <p class="mt-2">No employees added yet.</p>
+                            {% if voucher.status == 'DRAFT' %}
+                                <a href="{% url 'attendance:attendance_voucher_edit' voucher.id %}" class="btn btn-primary">
+                                    <i class="fas fa-user-plus"></i> Add Employee
+                                </a>
+                                <a href="{% url 'attendance:attendance_voucher_import' voucher.id %}" class="btn btn-success">
+                                    <i class="fas fa-file-import"></i> Import Excel
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

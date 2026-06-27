@@ -1,0 +1,86 @@
+<!-- templates/loans/loan_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'loans:loan_list' %}">Employee Loans</a></li>
+    <li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-calculate installment amount
+    document.addEventListener('DOMContentLoaded', function() {
+        const loanAmount = document.getElementById('id_loan_amount');
+        const interestAmount = document.getElementById('id_interest_amount');
+        const totalInstallments = document.getElementById('id_total_installments');
+
+        function calculateInstallment() {
+            const amount = parseFloat(loanAmount.value) || 0;
+            const interest = parseFloat(interestAmount.value) || 0;
+            const installments = parseInt(totalInstallments.value) || 1;
+
+            const total = amount + interest;
+            const installment = total / installments;
+
+            // Show preview
+            const preview = document.getElementById('installment-preview');
+            if (preview) {
+                preview.innerHTML = `
+                    <div class="alert alert-info">
+                        <strong>Preview:</strong><br>
+                        Total Amount: ₹${total.toFixed(2)}<br>
+                        Installment Amount: ₹${installment.toFixed(2)}
+                    </div>
+                `;
+            }
+        }
+
+        loanAmount.addEventListener('input', calculateInstallment);
+        interestAmount.addEventListener('input', calculateInstallment);
+        totalInstallments.addEventListener('input', calculateInstallment);
+
+        // Calculate on load
+        calculateInstallment();
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ title }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Note:</strong> Loan will be auto-deducted from salary during payroll processing.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+
+                    <!-- Installment Preview -->
+                    <div id="installment-preview"></div>
+
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> {{ button_text }}
+                        </button>
+                        <a href="{% url 'loans:loan_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+# Core Django
+Django==4.2.7
+
+# Django Extensions
+django-crispy-forms==2.1
+crispy-bootstrap5==0.7
+python-decouple==3.8
+django-debug-toolbar==4.2.0
+django-filter==23.5
+django-import-export==3.3.6
+django-cors-headers==4.3.1
+djangorestframework==3.14.0
+python-dotenv==1.0.0
+
+# Excel/Data Processing (Removed specific versions to avoid Python 3.14 errors)
+openpyxl
+pandas
+numpy
+
+# Image Processing
+Pillow
+
+# PDF Generation
+WeasyPrint
+xhtml2pdf
+
+# Deployment Packages (Mandatory for Render & PostgreSQL)
+gunicorn
+whitenoise
+dj-database-url
+psycopg2-binary

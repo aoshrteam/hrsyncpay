@@ -1,0 +1,622 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HRSyncPay - Payroll Management System{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    {% load static %}
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+
+    <!-- Sidebar CSS -->
+    <style>
+        .sidebar {
+            position: sticky;
+            top: 0;
+            height: calc(100vh - 100px);
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+        }
+        .sidebar .nav-link {
+            color: #495057;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            margin: 0.1rem 0.5rem;
+        }
+        .sidebar .nav-link:hover {
+            background-color: #e9ecef;
+            color: #0d6efd;
+        }
+        .sidebar .nav-link.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .sidebar .nav-link i {
+            width: 1.5rem;
+            text-align: center;
+        }
+        .sidebar .nav-header {
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #6c757d;
+            font-size: 0.75rem;
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #ced4da;
+            border-radius: 4px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- ========================================== -->
+    <!-- TOP NAVIGATION                            -->
+    <!-- ========================================== -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
+        <div class="container-fluid">
+            <!-- Brand -->
+            <a class="navbar-brand" href="{% url 'core:dashboard' %}">
+                <i class="fas fa-sync-alt fa-spin"></i> HRSyncPay
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <!-- Dashboard -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'core:dashboard' %}">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+
+                    <!-- ========================================== -->
+                    <!-- MASTERS DROPDOWN                          -->
+                    <!-- ========================================== -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="mastersDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-database"></i> Masters
+                        </a>
+                        <ul class="dropdown-menu">
+                            <!-- Company -->
+                            <li><a class="dropdown-item" href="{% url 'company:company_list' %}">
+                                <i class="fas fa-building"></i> Companies
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'company:company_create' %}">
+                                <i class="fas fa-plus"></i> Add Company
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Client -->
+                            <li><a class="dropdown-item" href="{% url 'clients:client_list' %}">
+                                <i class="fas fa-building"></i> Clients
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'clients:client_create' %}">
+                                <i class="fas fa-plus"></i> Add Client
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Employee -->
+                            <li><a class="dropdown-item" href="{% url 'employees:employee_list' %}">
+                                <i class="fas fa-users"></i> Employees
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'employees:employee_create' %}">
+                                <i class="fas fa-user-plus"></i> Add Employee
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Payheads -->
+                            <li><a class="dropdown-item" href="{% url 'payheads:payhead_list' %}">
+                                <i class="fas fa-list"></i> Payheads
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'payheads:payhead_create' %}">
+                                <i class="fas fa-plus"></i> Add Payhead
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'payheads:category_list' %}">
+                                <i class="fas fa-tags"></i> Categories
+                            </a></li>
+                            <!-- <li><hr class="dropdown-divider"></li> -->
+
+                            <!-- Leave Types - COMMENTED OUT -->
+                            <!-- <li><a class="dropdown-item" href="{% url 'leave:leave_type_list' %}">
+                                <i class="fas fa-calendar-alt"></i> Leave Types
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'leave:leave_list' %}">
+                                <i class="fas fa-calendar-check"></i> Employee Leaves
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li> -->
+
+                            <!-- Loans - COMMENTED OUT -->
+                            <!-- <li><a class="dropdown-item" href="{% url 'loans:loan_type_list' %}">
+                                <i class="fas fa-hand-holding-usd"></i> Loan Types
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'loans:loan_list' %}">
+                                <i class="fas fa-hand-holding-usd"></i> Employee Loans
+                            </a></li> -->
+                        </ul>
+                    </li>
+
+                    <!-- ========================================== -->
+                    <!-- PAYROLL DROPDOWN                          -->
+                    <!-- ========================================== -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="payrollDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-calculator"></i> Payroll
+                        </a>
+                        <ul class="dropdown-menu">
+                            <!-- Attendance -->
+                            <li><a class="dropdown-item" href="{% url 'attendance:attendance_voucher_list' %}">
+                                <i class="fas fa-calendar-check"></i> Attendance
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'attendance:attendance_voucher_create' %}">
+                                <i class="fas fa-plus"></i> New Attendance Voucher
+                            </a></li>
+                            <!-- <li><hr class="dropdown-divider"></li> -->
+
+                            <!-- Employee Leaves - COMMENTED OUT -->
+                            <!-- <li><a class="dropdown-item" href="{% url 'leave:leave_list' %}">
+                                <i class="fas fa-calendar-check"></i> Employee Leaves
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'leave:leave_create' %}">
+                                <i class="fas fa-plus"></i> New Leave Request
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li> -->
+
+                            <!-- Payroll Processing -->
+                            <li><a class="dropdown-item" href="{% url 'payroll:run_list' %}">
+                                <i class="fas fa-list"></i> Payroll Runs
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'payroll:run_create' %}">
+                                <i class="fas fa-plus"></i> Create Payroll Run
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Payments -->
+                            <li><a class="dropdown-item" href="{% url 'payroll:payment_voucher_list' %}">
+                                <i class="fas fa-hand-holding-usd"></i> Payments
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'payroll:payment_voucher_create' %}">
+                                <i class="fas fa-plus"></i> Create Payment
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Statutory -->
+                            <li><a class="dropdown-item" href="{% url 'statutory:statutory_settings' %}">
+                                <i class="fas fa-cog"></i> Statutory Settings
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'statutory:pt_slab_list' %}">
+                                <i class="fas fa-table"></i> PT Slabs
+                            </a></li>
+                        </ul>
+                    </li>
+
+                    <!-- ========================================== -->
+                    <!-- REPORTS DROPDOWN                          -->
+                    <!-- ========================================== -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="reportsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-file-alt"></i> Reports
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-file-invoice"></i> Salary Register
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-user"></i> Employee Ledger
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'core:client_wise_summary' %}">
+                                <i class="fas fa-users"></i> Client-wise Summary
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'core:pending_payments_summary' %}">
+                                <i class="fas fa-hourglass-half"></i> Pending Payments
+                            </a></li>
+                            <!-- <li><hr class="dropdown-divider"></li> -->
+
+                            <!-- Leave Reports - COMMENTED OUT -->
+                            <!-- <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-calendar-alt"></i> Leave Report
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-balance-scale"></i> Leave Balance Report
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li> -->
+
+                            <!-- Statutory Reports -->
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-shield-alt"></i> PF Report
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-medkit"></i> ESI Report
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-tax"></i> PT Report
+                            </a></li>
+                        </ul>
+                    </li>
+
+                    <!-- ========================================== -->
+                    <!-- IMPORT/EXPORT DROPDOWN                    -->
+                    <!-- ========================================== -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="importExportDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-exchange-alt"></i> Import/Export
+                        </a>
+                        <ul class="dropdown-menu">
+                            <!-- Master Data Import -->
+                            <li class="dropdown-header text-muted"><small>Master Data Import</small></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:import_employees' %}">
+                                    <i class="fas fa-file-import"></i> Import Employees
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:import_clients' %}">
+                                    <i class="fas fa-file-import"></i> Import Clients
+                                </a>
+                            </li>
+                            <!-- <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-file-import"></i> Import Companies
+                                </a>
+                            </li> -->
+                            <!-- Payhead Import - COMMENTED OUT -->
+                            <!-- <li>
+                                <a class="dropdown-item" href="{% url 'payheads:payhead_import' %}">
+                                    <i class="fas fa-file-import"></i> Import Payheads
+                                </a>
+                            </li> -->
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Master Data Export -->
+                            <li class="dropdown-header text-muted"><small>Master Data Export</small></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:export_employees' %}">
+                                    <i class="fas fa-file-export"></i> Export Employees
+                                </a>
+                            </li>
+                            <!-- <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-file-export"></i> Export Clients
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-file-export"></i> Export Companies
+                                </a>
+                            </li> -->
+                            <!-- Payhead Export - COMMENTED OUT -->
+                            <!-- <li>
+                                <a class="dropdown-item" href="{% url 'payheads:payhead_export' %}">
+                                    <i class="fas fa-file-export"></i> Export Payheads
+                                </a>
+                            </li> -->
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Sample Files -->
+                            <li class="dropdown-header text-muted"><small>Sample Files</small></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:download_employee_sample' %}">
+                                    <i class="fas fa-download"></i> Employee Sample
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:download_client_sample' %}">
+                                    <i class="fas fa-download"></i> Client Sample
+                                </a>
+                            </li>
+                            <!-- Payhead Sample - COMMENTED OUT -->
+                            <!-- <li>
+                                <a class="dropdown-item" href="{% url 'payheads:payhead_sample' %}">
+                                    <i class="fas fa-download"></i> Payhead Sample
+                                </a>
+                            </li> -->
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Attendance Import/Export -->
+                            <li class="dropdown-header text-muted"><small>Attendance</small></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'attendance:attendance_download_template' %}">
+                                    <i class="fas fa-download"></i> Download Template
+                                </a>
+                            </li>
+                            <!-- <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-file-import"></i> Import Attendance
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-file-export"></i> Export Attendance
+                                </a>
+                            </li> -->
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Payroll Export -->
+                            <li class="dropdown-header text-muted"><small>Payroll</small></li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-file-export"></i> Export Salary Register
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-file-export"></i> Export Payslips
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Challan Export -->
+                            <li class="dropdown-header text-muted"><small>Challans</small></li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-file-export"></i> PF Challan
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-file-export"></i> ESI Challan
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-file-export"></i> PT Challan
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- ========================================== -->
+                    <!-- PAYHEADS DROPDOWN                         -->
+                    <!-- ========================================== -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="payheadsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-coins"></i> Payheads
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li class="dropdown-header text-muted"><small>Payhead Management</small></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'payheads:payhead_list' %}">
+                                    <i class="fas fa-list"></i> All Payheads
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'payheads:payhead_create' %}">
+                                    <i class="fas fa-plus"></i> Create Payhead
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+
+                            <li class="dropdown-header text-muted"><small>Categories</small></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'payheads:category_list' %}">
+                                    <i class="fas fa-tags"></i> All Categories
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'payheads:category_create' %}">
+                                    <i class="fas fa-plus"></i> Create Category
+                                </a>
+                            </li>
+                            <!-- <li><hr class="dropdown-divider"></li> -->
+
+                            <!-- Reports - COMMENTED OUT -->
+                            <!-- <li class="dropdown-header text-muted"><small>Reports</small></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'payheads:payhead_summary_report' %}">
+                                    <i class="fas fa-chart-bar"></i> Summary Report
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'payheads:payhead_usage_report' %}">
+                                    <i class="fas fa-chart-pie"></i> Usage Report
+                                </a>
+                            </li> -->
+                        </ul>
+                    </li>
+
+                    <!-- Back Button -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="javascript:history.back()">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- ========================================== -->
+                <!-- USER SECTION                              -->
+                <!-- ========================================== -->
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle"></i>
+                            {{ user.get_full_name|default:user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                    <i class="fas fa-id-card"></i> Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-cog"></i> Settings
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ========================================== -->
+    <!-- BREADCRUMB                                -->
+    <!-- ========================================== -->
+    <div class="container-fluid mt-2">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'core:dashboard' %}"><i class="fas fa-home"></i></a>
+                </li>
+                {% block breadcrumb %}{% endblock %}
+            </ol>
+        </nav>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MAIN CONTENT WITH SIDEBAR SUPPORT         -->
+    <!-- ========================================== -->
+    <div class="container-fluid">
+        <div class="row">
+            {% if show_sidebar|default:False %}
+                <!-- ========================================== -->
+                <!-- SIDEBAR LAYOUT                           -->
+                <!-- ========================================== -->
+                <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+                    <div class="position-sticky pt-3">
+                        <ul class="nav flex-column">
+                            <li class="nav-header">Navigation</li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'core:dashboard' %}">
+                                    <i class="fas fa-home"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'employees:employee_list' %}">
+                                    <i class="fas fa-users"></i> Employees
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'clients:client_list' %}">
+                                    <i class="fas fa-building"></i> Clients
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'company:company_list' %}">
+                                    <i class="fas fa-building"></i> Companies
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'payheads:payhead_list' %}">
+                                    <i class="fas fa-list"></i> Payheads
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'payheads:category_list' %}">
+                                    <i class="fas fa-tags"></i> Categories
+                                </a>
+                            </li>
+                            {% block sidebar %}{% endblock %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-9 col-lg-10">
+                    <!-- Messages -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Main Content with Sidebar -->
+                    <main class="py-3">
+                        {% block sidebar_content %}
+                        {% endblock sidebar_content %}
+                    </main>
+                </div>
+            {% else %}
+                <!-- ========================================== -->
+                <!-- FULL WIDTH LAYOUT (NO SIDEBAR)            -->
+                <!-- ========================================== -->
+                <div class="col-12">
+                    <!-- Messages -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Main Content - Full Width -->
+                    <main class="py-3">
+                        {% block content %}
+                        {% endblock content %}
+                    </main>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- FOOTER                                    -->
+    <!-- ========================================== -->
+    <footer class="footer mt-auto py-3 bg-light border-top">
+        <div class="container-fluid text-center">
+            <span class="text-muted">
+                <i class="fas fa-sync-alt"></i> HRSyncPay &copy; {% now "Y" %} -
+                <span id="current-time"></span> | All Rights Reserved
+            </span>
+        </div>
+    </footer>
+
+    <!-- ========================================== -->
+    <!-- SCRIPTS                                   -->
+    <!-- ========================================== -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'js/custom.js' %}"></script>
+
+    <!-- Current Time Script -->
+    <script>
+        function updateTime() {
+            const now = new Date();
+            const options = {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            };
+            document.getElementById('current-time').textContent = now.toLocaleString('en-IN', options);
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
