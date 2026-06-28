@@ -1,0 +1,43 @@
+<!-- templates/employees/employee_contact_actions.html -->
+<!-- Reusable contact actions for employee -->
+<div class="btn-group" role="group">
+    <!-- Phone Call -->
+    {% if employee.phone %}
+        <a href="tel:{{ employee.phone }}" class="btn btn-sm btn-success" title="Call {{ employee.phone }}">
+            <i class="fas fa-phone"></i>
+        </a>
+    {% endif %}
+
+    <!-- WhatsApp -->
+    {% if employee.phone %}
+        {% if employee.phone|length == 10 %}
+            {% with phone_number=employee.phone %}
+                <a href="https://wa.me/91{{ phone_number }}" target="_blank"
+                   class="btn btn-sm btn-success" title="WhatsApp" style="background-color: #25D366; border-color: #25D366;">
+                    <i class="fab fa-whatsapp"></i>
+                </a>
+            {% endwith %}
+        {% else %}
+            <a href="https://wa.me/{{ employee.phone }}" target="_blank"
+               class="btn btn-sm btn-success" title="WhatsApp" style="background-color: #25D366; border-color: #25D366;">
+                <i class="fab fa-whatsapp"></i>
+            </a>
+        {% endif %}
+    {% endif %}
+
+    <!-- SMS -->
+    {% if employee.phone %}
+        <a href="sms:{{ employee.phone }}?body=Dear%20{{ employee.name }}%2C%0A%0AWe%20would%20like%20to%20connect%20with%20you.%0A%0ARegards%2C%0AHR%20Team"
+           class="btn btn-sm btn-secondary" title="SMS">
+            <i class="fas fa-sms"></i>
+        </a>
+    {% endif %}
+
+    <!-- Email -->
+    {% if employee.email %}
+        <a href="mailto:{{ employee.email }}?subject=Follow-up&body=Dear%20{{ employee.name }}%2C%0A%0AWe%20would%20like%20to%20connect%20with%20you.%0A%0ARegards%2C%0AHR%20Team"
+           class="btn btn-sm btn-primary" title="Email">
+            <i class="fas fa-envelope"></i>
+        </a>
+    {% endif %}
+</div>

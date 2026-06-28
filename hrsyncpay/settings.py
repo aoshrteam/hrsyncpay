@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     #'payments',
     'apps.leave',
     'apps.payheads',
+    'apps.locations',
 ]
 
 MIDDLEWARE = [

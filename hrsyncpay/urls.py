@@ -15,6 +15,7 @@ urlpatterns = [
     # Business Apps
     path('employees/', include('apps.employees.urls')),
     path('clients/', include('apps.clients.urls')),
+    path('locations/', include('apps.locations.urls')),
     path('company/', include('apps.company.urls')),
     path('payheads/', include('apps.payheads.urls')),
     path('attendance/', include('apps.attendance.urls')),
@@ -22,12 +23,10 @@ urlpatterns = [
     path('leave/', include('apps.leave.urls')),
     path('loans/', include('apps.loans.urls')),
     path('statutory/', include('apps.statutory.urls')),
+    path('accounts/', include('apps.accounts.urls')),
 
-    # Accounts App
-    path('accounts/', include('apps.accounts.urls')),  # ✅ ADD THIS LINE
-
-    # Django Authentication
-    path('auth/', include('django.contrib.auth.urls')),  # ✅ For login/logout
+    # Authentication
+    path('auth/', include('django.contrib.auth.urls')),
 ]
 
 if settings.DEBUG:

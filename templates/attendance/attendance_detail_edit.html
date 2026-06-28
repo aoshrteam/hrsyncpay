@@ -1,0 +1,87 @@
+<!-- templates/attendance/attendance_detail_edit.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit Attendance Record - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'attendance:attendance_voucher_list' %}">Attendance</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'attendance:attendance_voucher_detail' voucher.id %}">{{ voucher.voucher_number }}</a></li>
+    <li class="breadcrumb-item active">Edit Record</li>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const presentInput = document.getElementById('id_days_present');
+    const leaveInput = document.getElementById('id_days_leave');
+    const absentInput = document.getElementById('id_days_absent');
+
+    function calculateAbsent() {
+        if (presentInput && leaveInput && absentInput) {
+            // Get total days in month
+            const monthYear = '{{ voucher.month_year|date:"Y-m-d" }}';
+            const date = new Date(monthYear);
+            const totalDays = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+
+            const present = parseFloat(presentInput.value) || 0;
+            const leave = parseFloat(leaveInput.value) || 0;
+            const absent = totalDays - present - leave;
+
+            absentInput.value = Math.max(0, absent.toFixed(1));
+        }
+    }
+
+    if (presentInput) {
+        presentInput.addEventListener('change', calculateAbsent);
+        presentInput.addEventListener('input', calculateAbsent);
+    }
+    if (leaveInput) {
+        leaveInput.addEventListener('change', calculateAbsent);
+        leaveInput.addEventListener('input', calculateAbsent);
+    }
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-user-edit"></i> Edit Attendance Record</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>Employee:</strong> {{ detail.employee.name }}<br>
+                    <strong>Code:</strong> {{ detail.employee.employee_code }}<br>
+                    <strong>Month:</strong> {{ voucher.month_year|date:"F Y" }}<br>
+                    <strong>Total Days:</strong> {{ voucher.month_year|date:"t" }} days
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+
+                    <div class="alert alert-warning small">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Note:</strong> Absent Days will be auto-calculated as:
+                        Total Days - Present Days - Leave Days
+                    </div>
+
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Record
+                        </button>
+                        <a href="{% url 'attendance:attendance_voucher_detail' voucher.id %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

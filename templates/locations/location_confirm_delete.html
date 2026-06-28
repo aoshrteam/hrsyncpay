@@ -1,0 +1,56 @@
+<!-- templates/locations/location_confirm_delete.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Location - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:location_list' %}">Locations</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:location_detail' location.id %}">{{ location.location_name }}</a></li>
+    <li class="breadcrumb-item active">Delete</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Confirm Delete</h5>
+            </div>
+            <div class="card-body text-center py-4">
+                <i class="fas fa-map-pin fa-4x text-danger mb-3"></i>
+                <h5>Are you sure you want to delete this location?</h5>
+                <p class="text-muted">
+                    <strong>{{ location.location_name }}</strong>
+                    <br>
+                    Client: {{ location.client.name }}
+                    <br>
+                    Code: <code>{{ location.location_code }}</code>
+                </p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-circle"></i>
+                    This action will deactivate the location. Employees assigned to this location will not be affected.
+                </div>
+                {% if location.employee_mappings.count > 0 %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-users"></i>
+                    <strong>{{ location.employee_mappings.count }}</strong> employees are currently assigned to this location.
+                </div>
+                {% endif %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="fas fa-trash"></i> Yes, Delete Location
+                        </button>
+                        <a href="{% url 'locations:location_detail' location.id %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

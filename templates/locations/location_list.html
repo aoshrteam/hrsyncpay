@@ -1,0 +1,224 @@
+<!-- templates/locations/location_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Locations - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    {% if client %}
+        <li class="breadcrumb-item"><a href="{% url 'clients:client_detail' client.id %}">{{ client.name }}</a></li>
+    {% endif %}
+    <li class="breadcrumb-item active">Locations</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4>
+        <i class="fas fa-map-marker-alt"></i> Locations
+        {% if client %}
+            <small class="text-muted">- {{ client.name }}</small>
+        {% endif %}
+    </h4>
+    <div>
+        {% if client %}
+            <a href="{% url 'locations:location_create_for_client' client.id %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Location
+            </a>
+        {% else %}
+            <a href="{% url 'locations:location_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Location
+            </a>
+        {% endif %}
+        <a href="{% url 'clients:client_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Clients
+        </a>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-8">
+                <input type="text" name="search" class="form-control"
+                       placeholder="Search by location name, code, client..."
+                       value="{{ search|default:'' }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">{{ total_locations }}</h5>
+                <p class="card-text text-muted">Total Locations</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-success">{{ page_obj|length }}</h5>
+                <p class="card-text text-muted">Active Locations</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-primary">{{ total_employees|default:0 }}</h5>
+                <p class="card-text text-muted">Total Employees</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-info">{{ total_clients|default:0 }}</h5>
+                <p class="card-text text-muted">Clients</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Location Cards -->
+<div class="row">
+    {% if page_obj %}
+        {% for location in page_obj %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 {% if location.is_head_office %}border-primary{% endif %}">
+                    <div class="card-header {% if location.is_head_office %}bg-primary text-white{% else %}bg-light{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-map-pin"></i>
+                                {{ location.location_name }}
+                                {% if location.is_head_office %}
+                                    <span class="badge bg-warning text-dark">Head Office</span>
+                                {% endif %}
+                            </h6>
+                            <span class="badge {% if location.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                {% if location.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <small class="text-muted">Client:</small>
+                            <strong>{{ location.client.name }}</strong>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">Code:</small>
+                            <code>{{ location.location_code }}</code>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">Type:</small>
+                            {{ location.get_location_type_display }}
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">GST:</small>
+                            {{ location.gst_number|default:location.client.gst_number|default:"N/A" }}
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">State:</small>
+                            {{ location.gst_state|default:location.client.gst_state|default:"N/A" }}
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">Employees:</small>
+                            <span class="badge bg-primary">{{ location.employee_mappings.count }}</span>
+                        </div>
+                        <div class="small text-muted">
+                            <i class="fas fa-map-marker-alt"></i>
+                            {{ location.city }}, {{ location.state }}
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <div class="btn-group w-100">
+                            <a href="{% url 'locations:location_detail' location.id %}"
+                               class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'locations:location_edit' location.id %}"
+                               class="btn btn-sm btn-outline-warning">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'locations:location_employees' location.id %}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-users"></i>
+                            </a>
+                            <a href="{% url 'locations:location_delete' location.id %}"
+                               class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center py-4">
+                <i class="fas fa-map-marker-alt fa-3x mb-3"></i>
+                <h5>No Locations Found</h5>
+                <p>Create your first location to get started.</p>
+                {% if client %}
+                    <a href="{% url 'locations:location_create_for_client' client.id %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Location
+                    </a>
+                {% else %}
+                    <a href="{% url 'locations:location_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Location
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </a>
+            </li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}">
+                        {{ num }}
+                    </a>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                    Next <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<div class="text-muted mt-2">
+    Total Locations: {{ total_locations }}
+</div>
+{% endblock %}

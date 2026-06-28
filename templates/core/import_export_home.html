@@ -17,6 +17,9 @@
     </div>
 </div>
 
+<!-- templates/core/import_export_home.html -->
+<!-- Add Assignment Import Card -->
+
 <!-- Import Section -->
 <div class="row g-4 mt-2">
     <div class="col-md-6">
@@ -30,17 +33,18 @@
                         <i class="fas fa-users text-primary"></i> Import Employees
                         <span class="badge bg-secondary float-end">Excel</span>
                     </a>
-                    <a href="{% url 'core:import_clients' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-building text-success"></i> Import Clients
-                        <span class="badge bg-secondary float-end">Excel</span>
+                    <!-- ✅ ASSIGNMENT IMPORT -->
+                    <a href="{% url 'core:import_assignments' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-handshake text-success"></i> Import Assignments
+                        <span class="badge bg-success float-end">Excel</span>
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action">
-                        <i class="fas fa-building text-warning"></i> Import Companies
+                    <a href="{% url 'core:import_clients' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-building text-warning"></i> Import Clients
                         <span class="badge bg-secondary float-end">Excel</span>
                     </a>
                     <a href="#" class="list-group-item list-group-item-action">
                         <i class="fas fa-calendar-check text-info"></i> Import Attendance
-                        <span class="badge bg-secondary float-end">Excel</span>
+                        <span class="badge bg-secondary float-end">Coming Soon</span>
                     </a>
                 </div>
             </div>
@@ -90,24 +94,91 @@
     <div class="col-md-12">
         <div class="card">
             <div class="card-header bg-info text-white">
-                <h6 class="mb-0"><i class="fas fa-download"></i> Sample Files</h6>
+                <h6 class="mb-0"><i class="fas fa-download"></i> Sample Templates</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <a href="{% url 'core:download_employee_sample' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="fas fa-file-excel fa-2x d-block mb-2"></i>
+                            <strong>Employee Import</strong>
+                        </a>
+                    </div>
+                    <!-- ✅ ASSIGNMENT SAMPLE -->
+                    <div class="col-md-3">
+                        <a href="{% url 'core:download_assignment_sample' %}" class="btn btn-outline-success w-100 py-3">
+                            <i class="fas fa-file-excel fa-2x d-block mb-2"></i>
+                            <strong>Assignment Import</strong>
+                            <span class="badge bg-success">New</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'core:download_client_sample' %}" class="btn btn-outline-warning w-100 py-3">
+                            <i class="fas fa-file-excel fa-2x d-block mb-2"></i>
+                            <strong>Client Import</strong>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="#" class="btn btn-outline-info w-100 py-3">
+                            <i class="fas fa-file-excel fa-2x d-block mb-2"></i>
+                            <strong>Attendance Import</strong>
+                            <small class="d-block text-muted">Coming Soon</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Errors Section -->
+{% if request.session.import_errors %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Import Errors</h5>
+            </div>
+            <div class="card-body">
+                <p>{{ request.session.import_errors|length }} errors found in last import.</p>
+                <a href="{% url 'core:export_import_errors' %}" class="btn btn-danger">
+                    <i class="fas fa-file-excel"></i> Download Error Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Quick Tips -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0"><i class="fas fa-lightbulb"></i> Quick Tips</h6>
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-4">
-                        <a href="{% url 'core:download_employee_sample' %}" class="btn btn-outline-primary w-100">
-                            <i class="fas fa-file-excel"></i> Employee Sample
-                        </a>
+                        <div class="text-center">
+                            <i class="fas fa-check-circle text-success fa-2x"></i>
+                            <h6 class="mt-2">Master Code is Mandatory</h6>
+                            <small class="text-muted">Employee Number or Employee Code is required</small>
+                        </div>
                     </div>
                     <div class="col-md-4">
-                        <a href="{% url 'core:download_client_sample' %}" class="btn btn-outline-success w-100">
-                            <i class="fas fa-file-excel"></i> Client Sample
-                        </a>
+                        <div class="text-center">
+                            <i class="fas fa-sync-alt text-primary fa-2x"></i>
+                            <h6 class="mt-2">Smart Update</h6>
+                            <small class="text-muted">Only filled fields are updated</small>
+                        </div>
                     </div>
                     <div class="col-md-4">
-                        <a href="#" class="btn btn-outline-warning w-100">
-                            <i class="fas fa-file-excel"></i> Attendance Sample
-                        </a>
+                        <div class="text-center">
+                            <i class="fas fa-file-excel text-success fa-2x"></i>
+                            <h6 class="mt-2">Error Export</h6>
+                            <small class="text-muted">Errors are exported as Excel file</small>
+                        </div>
                     </div>
                 </div>
             </div>

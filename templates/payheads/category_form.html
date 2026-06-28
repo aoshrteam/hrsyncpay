@@ -1,330 +1,40 @@
-<!-- templates/payheads/category_form.html -->
-{% extends 'base.html' %}
-{% load static %}
-{% load crispy_forms_tags %}
+# apps/payheads/forms.py
+from django import forms
+from .models import Payhead
 
-{% block title %}{{ title }} - HRSyncPay{% endblock %}
 
-{% block extra_css %}
-<style>
-    .form-section {
-        background-color: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        border-left: 4px solid #6c757d;
-    }
-    .form-section.earning {
-        border-left-color: #28a745;
-    }
-    .form-section.deduction {
-        border-left-color: #dc3545;
-    }
-    .form-section.allocation {
-        border-left-color: #17a2b8;
-    }
-    .form-section.other {
-        border-left-color: #6c757d;
-    }
-    .help-text {
-        font-size: 0.85rem;
-        color: #6c757d;
-    }
-    .card-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-    }
-    .card-header h5 {
-        color: white;
-    }
-</style>
-{% endblock %}
+class PayheadForm(forms.ModelForm):
+    """Global Payhead Form"""
 
-{% block extra_js %}
-<script>
-    // ============================================
-    // DYNAMIC CLIENT CATEGORY FILTER
-    // ============================================
-    document.addEventListener('DOMContentLoaded', function() {
-        const clientSelect = document.getElementById('id_client');
-        const categorySelect = document.getElementById('id_category');
-
-        if (clientSelect) {
-            clientSelect.addEventListener('change', function() {
-                const clientId = this.value;
-                if (clientId) {
-                    loadCategories(clientId);
-                } else {
-                    categorySelect.innerHTML = '<option value="">---------</option>';
-                }
-            });
+    class Meta:
+        model = Payhead
+        fields = ['name', 'type', 'code', 'description', 'is_active', 'display_order']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter payhead name (e.g., Bonus, DA, Insurance)'
+            }),
+            'type': forms.Select(attrs={'class': 'form-control'}),
+            'code': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Short code (e.g., BONUS)'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Enter description'
+            }),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'display_order': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': '0'
+            }),
         }
-
-        // Auto-load categories if client is pre-selected
-        if (clientSelect && clientSelect.value) {
-            loadCategories(clientSelect.value);
+        labels = {
+            'name': 'Payhead Name *',
+            'type': 'Payhead Type *',
+            'code': 'Short Code',
+            'description': 'Description',
+            'is_active': 'Active?',
+            'display_order': 'Display Order',
         }
-    });
-
-    function loadCategories(clientId) {
-        const categorySelect = document.getElementById('id_category');
-        categorySelect.innerHTML = '<option value="">Loading...</option>';
-
-        fetch(`/payheads/api/client-categories/?client_id=${clientId}`)
-            .then(response => response.json())
-            .then(data => {
-                categorySelect.innerHTML = '<option value="">---------</option>';
-                if (data.categories) {
-                    data.categories.forEach(category => {
-                        const option = document.createElement('option');
-                        option.value = category.id;
-                        option.textContent = category.name;
-                        categorySelect.appendChild(option);
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error loading categories:', error);
-                categorySelect.innerHTML = '<option value="">Error loading categories</option>';
-            });
-    }
-
-    // ============================================
-    // VALIDATE FORM
-    // ============================================
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('category-form');
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                const nameField = document.getElementById('id_name');
-                if (nameField && !nameField.value.trim()) {
-                    e.preventDefault();
-                    alert('Category name is required.');
-                    nameField.focus();
-                    return false;
-                }
-
-                // Show loading spinner
-                const submitBtn = document.querySelector('button[type="submit"]');
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-                }
-            });
-        }
-    });
-</script>
-{% endblock %}
-
-{% block breadcrumb %}
-    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
-    <li class="breadcrumb-item"><a href="{% url 'payheads:payhead_list' %}">Payheads</a></li>
-    <li class="breadcrumb-item"><a href="{% url 'payheads:category_list' %}">Categories</a></li>
-    {% if client %}
-        <li class="breadcrumb-item"><a href="{% url 'payheads:category_list_by_client' client.id %}">{{ client.name }}</a></li>
-    {% endif %}
-    <li class="breadcrumb-item active">{{ title }}</li>
-{% endblock %}
-
-{% block content %}
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-tags"></i> {{ title }}
-                </h5>
-            </div>
-            <div class="card-body">
-                <form method="post" id="category-form" novalidate>
-                    {% csrf_token %}
-
-                    <!-- ========================================== -->
-                    <!-- BASIC INFORMATION -->
-                    <!-- ========================================== -->
-                    <div class="form-section">
-                        <h6 class="mb-3">
-                            <i class="fas fa-info-circle text-primary"></i>
-                            Basic Information
-                        </h6>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                {{ form.client|as_crispy_field }}
-                                {% if form.client.help_text %}
-                                    <small class="help-text">{{ form.client.help_text }}</small>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.name|as_crispy_field }}
-                                {% if form.name.help_text %}
-                                    <small class="help-text">{{ form.name.help_text }}</small>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ========================================== -->
-                    <!-- CATEGORY DETAILS -->
-                    <!-- ========================================== -->
-                    <div class="form-section">
-                        <h6 class="mb-3">
-                            <i class="fas fa-cog text-primary"></i>
-                            Category Details
-                        </h6>
-
-                        <div class="row">
-                            <div class="col-md-12">
-                                {{ form.category_type|as_crispy_field }}
-                                {% if form.category_type.help_text %}
-                                    <small class="help-text">{{ form.category_type.help_text }}</small>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-12">
-                                {{ form.description|as_crispy_field }}
-                                {% if form.description.help_text %}
-                                    <small class="help-text">{{ form.description.help_text }}</small>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ========================================== -->
-                    <!-- DISPLAY SETTINGS -->
-                    <!-- ========================================== -->
-                    <div class="form-section">
-                        <h6 class="mb-3">
-                            <i class="fas fa-paint-brush text-primary"></i>
-                            Display Settings
-                        </h6>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                {{ form.sort_order|as_crispy_field }}
-                                {% if form.sort_order.help_text %}
-                                    <small class="help-text">{{ form.sort_order.help_text }}</small>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check mt-4">
-                                    {{ form.is_active|as_crispy_field }}
-                                    <label class="form-check-label" for="id_is_active">
-                                        Active
-                                    </label>
-                                    {% if form.is_active.help_text %}
-                                        <small class="help-text d-block">{{ form.is_active.help_text }}</small>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ========================================== -->
-                    <!-- PREVIEW SECTION -->
-                    <!-- ========================================== -->
-                    <div class="form-section">
-                        <h6 class="mb-3">
-                            <i class="fas fa-eye text-primary"></i>
-                            Preview
-                        </h6>
-                        <div class="alert alert-info">
-                            <strong>Category Preview:</strong>
-                            <span id="category-preview" class="badge bg-secondary">
-                                {% if form.instance.name %}
-                                    {{ form.instance.name }}
-                                {% else %}
-                                    New Category
-                                {% endif %}
-                            </span>
-                            <span id="type-preview" class="badge bg-primary">
-                                {% if form.instance.category_type %}
-                                    {{ form.instance.get_category_type_display }}
-                                {% else %}
-                                    Earning
-                                {% endif %}
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- ========================================== -->
-                    <!-- FORM ACTIONS -->
-                    <!-- ========================================== -->
-                    <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="fas fa-save"></i> {{ button_text|default:'Save Category' }}
-                        </button>
-
-                        <div class="d-flex gap-2">
-                            {% if client %}
-                                <a href="{% url 'payheads:category_list_by_client' client.id %}" class="btn btn-secondary">
-                                    <i class="fas fa-times"></i> Cancel
-                                </a>
-                            {% else %}
-                                <a href="{% url 'payheads:category_list' %}" class="btn btn-secondary">
-                                    <i class="fas fa-times"></i> Cancel
-                                </a>
-                            {% endif %}
-
-                            {% if form.instance.pk %}
-                                <a href="{% url 'payheads:category_delete' form.instance.pk %}" class="btn btn-danger ms-auto">
-                                    <i class="fas fa-trash"></i> Delete
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- ADDITIONAL INFORMATION -->
-        <!-- ========================================== -->
-        {% if form.instance.pk %}
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="fas fa-info-circle"></i> Category Information
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <strong>Created:</strong> {{ form.instance.created_at|date:"Y-m-d H:i" }}
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Last Updated:</strong> {{ form.instance.updated_at|date:"Y-m-d H:i" }}
-                        </div>
-                    </div>
-                    <div class="row mt-2">
-                        <div class="col-md-12">
-                            <strong>Payheads in this category:</strong>
-                            <span class="badge bg-info">
-                                {{ form.instance.payheads.count }}
-                            </span>
-                            {% if form.instance.payheads.exists %}
-                                <ul class="list-inline mt-2">
-                                    {% for payhead in form.instance.payheads.all|slice:":5" %}
-                                        <li class="list-inline-item">
-                                            <span class="badge bg-secondary">{{ payhead.name }}</span>
-                                        </li>
-                                    {% endfor %}
-                                    {% if form.instance.payheads.count > 5 %}
-                                        <li class="list-inline-item">
-                                            <span class="badge bg-secondary">+{{ form.instance.payheads.count|add:"-5" }} more</span>
-                                        </li>
-                                    {% endif %}
-                                </ul>
-                            {% else %}
-                                <small class="text-muted">No payheads in this category yet.</small>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% endif %}
-    </div>
-</div>
-{% endblock %}

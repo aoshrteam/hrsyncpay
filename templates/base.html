@@ -114,6 +114,15 @@
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
 
+                            <!-- Locations -->
+                            <li><a class="dropdown-item" href="{% url 'locations:location_list' %}">
+                                <i class="fas fa-map-marker-alt"></i> Locations
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'locations:location_create' %}">
+                                <i class="fas fa-plus"></i> Add Location
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+
                             <!-- Employee -->
                             <li><a class="dropdown-item" href="{% url 'employees:employee_list' %}">
                                 <i class="fas fa-users"></i> Employees
@@ -130,27 +139,7 @@
                             <li><a class="dropdown-item" href="{% url 'payheads:payhead_create' %}">
                                 <i class="fas fa-plus"></i> Add Payhead
                             </a></li>
-                            <li><a class="dropdown-item" href="{% url 'payheads:category_list' %}">
-                                <i class="fas fa-tags"></i> Categories
-                            </a></li>
-                            <!-- <li><hr class="dropdown-divider"></li> -->
-
-                            <!-- Leave Types - COMMENTED OUT -->
-                            <!-- <li><a class="dropdown-item" href="{% url 'leave:leave_type_list' %}">
-                                <i class="fas fa-calendar-alt"></i> Leave Types
-                            </a></li>
-                            <li><a class="dropdown-item" href="{% url 'leave:leave_list' %}">
-                                <i class="fas fa-calendar-check"></i> Employee Leaves
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li> -->
-
-                            <!-- Loans - COMMENTED OUT -->
-                            <!-- <li><a class="dropdown-item" href="{% url 'loans:loan_type_list' %}">
-                                <i class="fas fa-hand-holding-usd"></i> Loan Types
-                            </a></li>
-                            <li><a class="dropdown-item" href="{% url 'loans:loan_list' %}">
-                                <i class="fas fa-hand-holding-usd"></i> Employee Loans
-                            </a></li> -->
+                            <!-- Categories removed -->
                         </ul>
                     </li>
 
@@ -169,16 +158,6 @@
                             <li><a class="dropdown-item" href="{% url 'attendance:attendance_voucher_create' %}">
                                 <i class="fas fa-plus"></i> New Attendance Voucher
                             </a></li>
-                            <!-- <li><hr class="dropdown-divider"></li> -->
-
-                            <!-- Employee Leaves - COMMENTED OUT -->
-                            <!-- <li><a class="dropdown-item" href="{% url 'leave:leave_list' %}">
-                                <i class="fas fa-calendar-check"></i> Employee Leaves
-                            </a></li>
-                            <li><a class="dropdown-item" href="{% url 'leave:leave_create' %}">
-                                <i class="fas fa-plus"></i> New Leave Request
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li> -->
 
                             <!-- Payroll Processing -->
                             <li><a class="dropdown-item" href="{% url 'payroll:run_list' %}">
@@ -228,16 +207,7 @@
                             <li><a class="dropdown-item" href="{% url 'core:pending_payments_summary' %}">
                                 <i class="fas fa-hourglass-half"></i> Pending Payments
                             </a></li>
-                            <!-- <li><hr class="dropdown-divider"></li> -->
-
-                            <!-- Leave Reports - COMMENTED OUT -->
-                            <!-- <li><a class="dropdown-item" href="#">
-                                <i class="fas fa-calendar-alt"></i> Leave Report
-                            </a></li>
-                            <li><a class="dropdown-item" href="#">
-                                <i class="fas fa-balance-scale"></i> Leave Balance Report
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li> -->
+                            <li><hr class="dropdown-divider"></li>
 
                             <!-- Statutory Reports -->
                             <li><a class="dropdown-item" href="#">
@@ -272,17 +242,12 @@
                                     <i class="fas fa-file-import"></i> Import Clients
                                 </a>
                             </li>
-                            <!-- <li>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-file-import"></i> Import Companies
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:import_assignments' %}">
+                                    <i class="fas fa-handshake text-success"></i> Import Assignments
+                                    <span class="badge bg-success float-end">New</span>
                                 </a>
-                            </li> -->
-                            <!-- Payhead Import - COMMENTED OUT -->
-                            <!-- <li>
-                                <a class="dropdown-item" href="{% url 'payheads:payhead_import' %}">
-                                    <i class="fas fa-file-import"></i> Import Payheads
-                                </a>
-                            </li> -->
+                            </li>
                             <li><hr class="dropdown-divider"></li>
 
                             <!-- Master Data Export -->
@@ -292,22 +257,11 @@
                                     <i class="fas fa-file-export"></i> Export Employees
                                 </a>
                             </li>
-                            <!-- <li>
-                                <a class="dropdown-item" href="#">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:export_clients' %}">
                                     <i class="fas fa-file-export"></i> Export Clients
                                 </a>
                             </li>
-                            <li>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-file-export"></i> Export Companies
-                                </a>
-                            </li> -->
-                            <!-- Payhead Export - COMMENTED OUT -->
-                            <!-- <li>
-                                <a class="dropdown-item" href="{% url 'payheads:payhead_export' %}">
-                                    <i class="fas fa-file-export"></i> Export Payheads
-                                </a>
-                            </li> -->
                             <li><hr class="dropdown-divider"></li>
 
                             <!-- Sample Files -->
@@ -322,12 +276,12 @@
                                     <i class="fas fa-download"></i> Client Sample
                                 </a>
                             </li>
-                            <!-- Payhead Sample - COMMENTED OUT -->
-                            <!-- <li>
-                                <a class="dropdown-item" href="{% url 'payheads:payhead_sample' %}">
-                                    <i class="fas fa-download"></i> Payhead Sample
+                            <li>
+                                <a class="dropdown-item" href="{% url 'core:download_assignment_sample' %}">
+                                    <i class="fas fa-file-excel text-success"></i> Assignment Sample
+                                    <span class="badge bg-success float-end">New</span>
                                 </a>
-                            </li> -->
+                            </li>
                             <li><hr class="dropdown-divider"></li>
 
                             <!-- Attendance Import/Export -->
@@ -337,16 +291,6 @@
                                     <i class="fas fa-download"></i> Download Template
                                 </a>
                             </li>
-                            <!-- <li>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-file-import"></i> Import Attendance
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-file-export"></i> Export Attendance
-                                </a>
-                            </li> -->
                             <li><hr class="dropdown-divider"></li>
 
                             <!-- Payroll Export -->
@@ -384,7 +328,7 @@
                     </li>
 
                     <!-- ========================================== -->
-                    <!-- PAYHEADS DROPDOWN                         -->
+                    <!-- PAYHEADS DROPDOWN - UPDATED               -->
                     <!-- ========================================== -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="payheadsDropdown" role="button" data-bs-toggle="dropdown">
@@ -402,33 +346,36 @@
                                     <i class="fas fa-plus"></i> Create Payhead
                                 </a>
                             </li>
+                            <!-- Categories section removed -->
+                        </ul>
+                    </li>
+
+                    <!-- ========================================== -->
+                    <!-- LOCATIONS DROPDOWN                         -->
+                    <!-- ========================================== -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="locationsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-map-marker-alt"></i> Locations
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li class="dropdown-header text-muted"><small>Location Management</small></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'locations:location_list' %}">
+                                    <i class="fas fa-list"></i> All Locations
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'locations:location_create' %}">
+                                    <i class="fas fa-plus"></i> Create Location
+                                </a>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
-
-                            <li class="dropdown-header text-muted"><small>Categories</small></li>
+                            <li class="dropdown-header text-muted"><small>Client Locations</small></li>
                             <li>
-                                <a class="dropdown-item" href="{% url 'payheads:category_list' %}">
-                                    <i class="fas fa-tags"></i> All Categories
+                                <a class="dropdown-item" href="{% url 'clients:client_list' %}">
+                                    <i class="fas fa-building"></i> View Clients
                                 </a>
                             </li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'payheads:category_create' %}">
-                                    <i class="fas fa-plus"></i> Create Category
-                                </a>
-                            </li>
-                            <!-- <li><hr class="dropdown-divider"></li> -->
-
-                            <!-- Reports - COMMENTED OUT -->
-                            <!-- <li class="dropdown-header text-muted"><small>Reports</small></li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'payheads:payhead_summary_report' %}">
-                                    <i class="fas fa-chart-bar"></i> Summary Report
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'payheads:payhead_usage_report' %}">
-                                    <i class="fas fa-chart-pie"></i> Usage Report
-                                </a>
-                            </li> -->
                         </ul>
                     </li>
 
@@ -521,15 +468,16 @@
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link" href="{% url 'locations:location_list' %}">
+                                    <i class="fas fa-map-marker-alt"></i> Locations
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link" href="{% url 'payheads:payhead_list' %}">
                                     <i class="fas fa-list"></i> Payheads
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'payheads:category_list' %}">
-                                    <i class="fas fa-tags"></i> Categories
-                                </a>
-                            </li>
+                            <!-- Categories removed from sidebar -->
                             {% block sidebar %}{% endblock %}
                         </ul>
                     </div>

@@ -109,5 +109,36 @@ class Client(models.Model):
         verbose_name_plural = 'Clients'
 
 
+# apps/clients/models.py
+
+class ClientPayheadTemplate(models.Model):
+    """Client-wise Payhead Template"""
+
+    TEMPLATE_TYPE_CHOICES = [
+        ('EARNING', 'Earning'),
+        ('DEDUCTION', 'Deduction'),
+    ]
+
+    client = models.ForeignKey(
+        Client,
+        on_delete=models.CASCADE,
+        related_name='client_payhead_templates'  # ✅ Changed from 'payhead_templates'
+    )
+    name = models.CharField(max_length=100)
+    type = models.CharField(max_length=20, choices=TEMPLATE_TYPE_CHOICES)
+    code = models.CharField(max_length=20, blank=True)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    display_order = models.IntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['client', 'name', 'type']
+        ordering = ['display_order', 'name']
+
+    def __str__(self):
+        return f"{self.client.name} - {self.name} ({self.type})"
 # apps/clients/models.py - Add these models
 

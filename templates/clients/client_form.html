@@ -5,48 +5,6 @@
 
 {% block title %}{{ title }} - HRSyncPay{% endblock %}
 
-{% block extra_js %}
-<script>
-// Toggle billing fields based on auto_billing_enabled
-function toggleBillingFields(checked) {
-    const billingFields = document.querySelectorAll('.billing-field');
-    billingFields.forEach(field => {
-        field.style.display = checked ? 'block' : 'none';
-    });
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    const checkbox = document.getElementById('id_auto_billing_enabled');
-    if (checkbox) {
-        toggleBillingFields(checkbox.checked);
-        checkbox.addEventListener('change', function() {
-            toggleBillingFields(this.checked);
-        });
-    }
-});
-
-// Validate pincode
-document.getElementById('id_pincode').addEventListener('input', function() {
-    this.value = this.value.replace(/\D/g, '').slice(0, 6);
-});
-
-// Validate locations JSON
-document.getElementById('id_locations').addEventListener('blur', function() {
-    try {
-        if (this.value) {
-            JSON.parse(this.value);
-            this.classList.remove('is-invalid');
-            this.classList.add('is-valid');
-        }
-    } catch (e) {
-        this.classList.remove('is-valid');
-        this.classList.add('is-invalid');
-    }
-});
-</script>
-{% endblock %}
-
 {% block breadcrumb %}
     <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
     <li class="breadcrumb-item"><a href="{% url 'clients:client_list' %}">Clients</a></li>
@@ -58,124 +16,236 @@ document.getElementById('id_locations').addEventListener('blur', function() {
     <div class="col-md-10 mx-auto">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">{{ title }}</h5>
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-building"></i> {{ title }}
+                </h5>
             </div>
             <div class="card-body">
-                <form method="post">
+                <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
 
-                    <!-- Basic Details -->
+                    <!-- ========================================== -->
+                    <!-- BASIC DETAILS                             -->
+                    <!-- ========================================== -->
                     <h6 class="border-bottom pb-2 mb-3 text-primary">
                         <i class="fas fa-info-circle"></i> Basic Details
                     </h6>
                     <div class="row">
-                        <div class="col-md-6">{{ form.name|as_crispy_field }}</div>
-                        <div class="col-md-6">{{ form.code|as_crispy_field }}</div>
-                    </div>
-
-                    <!-- Location Details -->
-                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-primary">
-                        <i class="fas fa-map-marker-alt"></i> Location Details
-                    </h6>
-                    <div class="row">
-                        <div class="col-md-12">{{ form.address|as_crispy_field }}</div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4">{{ form.city|as_crispy_field }}</div>
-                        <div class="col-md-4">{{ form.state|as_crispy_field }}</div>
-                        <div class="col-md-4">{{ form.pincode|as_crispy_field }}</div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">{{ form.country|as_crispy_field }}</div>
-                    </div>
-
-                    <!-- Contact Details -->
-                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-primary">
-                        <i class="fas fa-phone"></i> Contact Details
-                    </h6>
-                    <div class="row">
-                        <div class="col-md-4">{{ form.contact_person|as_crispy_field }}</div>
-                        <div class="col-md-4">{{ form.contact_email|as_crispy_field }}</div>
-                        <div class="col-md-4">{{ form.contact_phone|as_crispy_field }}</div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">{{ form.website|as_crispy_field }}</div>
-                    </div>
-
-                    <!-- GST Details -->
-                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-success">
-                        <i class="fas fa-file-invoice"></i> GST Details
-                    </h6>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        <strong>GST Applicable:</strong> Auto-determined from GST State.
-                        {% if form.instance.gst_state %}
-                            ✅ GST is APPLICABLE
-                        {% else %}
-                            ❌ GST is NOT APPLICABLE
-                        {% endif %}
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">{{ form.gst_number|as_crispy_field }}</div>
-                        <div class="col-md-6">{{ form.gst_state|as_crispy_field }}</div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">{{ form.pan_number|as_crispy_field }}</div>
-                    </div>
-
-                    <!-- Auto Billing Settings (New) -->
-                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-warning">
-                        <i class="fas fa-rocket"></i> Auto Billing Settings
-                    </h6>
-                    <div class="row">
-                        <div class="col-md-12">{{ form.auto_billing_enabled|as_crispy_field }}</div>
-                    </div>
-
-                    <!-- Commission & Service Charge (Toggle based on Auto Billing) -->
-                    <div class="billing-field" style="display: none;">
-                        <h6 class="border-bottom pb-2 mb-3 mt-4 text-info">
-                            <i class="fas fa-percent"></i> Commission & Service Charge
-                            <small class="text-muted">(Only when Auto Billing is enabled)</small>
-                        </h6>
-                        <div class="row">
-                            <div class="col-md-4">{{ form.commission_type|as_crispy_field }}</div>
-                            <div class="col-md-4">{{ form.commission_rate|as_crispy_field }}</div>
-                            <div class="col-md-4">{{ form.service_charge|as_crispy_field }}</div>
+                        <div class="col-md-6">
+                            {{ form.name|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.code|as_crispy_field }}
                         </div>
                     </div>
 
-                    <!-- Payment Terms -->
-                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-secondary">
-                        <i class="fas fa-hand-holding-usd"></i> Payment Terms
+                    <!-- ========================================== -->
+                    <!-- LOCATION DETAILS                          -->
+                    <!-- ========================================== -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-success">
+                        <i class="fas fa-map-marker-alt"></i> Location Details
                     </h6>
                     <div class="row">
-                        <div class="col-md-6">{{ form.payment_terms|as_crispy_field }}</div>
-                        <div class="col-md-6">{{ form.credit_limit|as_crispy_field }}</div>
+                        <div class="col-md-12">
+                            {{ form.address|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.city|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.state|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.pincode|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.country|as_crispy_field }}
+                        </div>
                     </div>
 
-                    <!-- Locations (JSON) -->
+                    <!-- ========================================== -->
+                    <!-- GST DETAILS                               -->
+                    <!-- ========================================== -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-warning">
+                        <i class="fas fa-file-invoice"></i> GST Details
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.gst_number|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.gst_state|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.pan_number|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- CONTACT DETAILS                           -->
+                    <!-- ========================================== -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-info">
+                        <i class="fas fa-phone"></i> Contact Details
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.contact_person|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.contact_email|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.contact_phone|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.website|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- BILLING SETTINGS                          -->
+                    <!-- ========================================== -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-danger">
+                        <i class="fas fa-money-bill-wave"></i> Billing Settings
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.auto_billing_enabled|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div id="billing-settings" {% if not form.auto_billing_enabled.value %}style="display:none;"{% endif %}>
+                        <div class="row">
+                            <div class="col-md-4">
+                                {{ form.commission_type|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.commission_rate|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.service_charge|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.payment_terms|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.credit_limit|as_crispy_field }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- LOCATIONS MANAGEMENT (NEW)                -->
+                    <!-- ========================================== -->
                     <h6 class="border-bottom pb-2 mb-3 mt-4 text-primary">
-                        <i class="fas fa-location-dot"></i> Multiple Locations (JSON)
+                        <i class="fas fa-map-pin"></i> Client Locations
+                        <a href="{% url 'locations:location_create' %}" class="btn btn-sm btn-outline-primary float-end" target="_blank">
+                            <i class="fas fa-plus"></i> Manage Locations
+                        </a>
                     </h6>
-                    <div class="row">
-                        <div class="col-md-12">{{ form.locations|as_crispy_field }}</div>
-                    </div>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        <strong>Example:</strong>
-                        <code>[{"name":"Branch 1","address":"123, Jaipur","city":"Jaipur","state":"Rajasthan","pincode":"302001"}]</code>
-                    </div>
 
-                    <!-- Status -->
+                    {% if form.instance.pk %}
+                        <!-- Edit Mode - Show existing locations -->
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Location Name</th>
+                                        <th>Code</th>
+                                        <th>Type</th>
+                                        <th>GST Number</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for location in form.instance.client_locations.all %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'locations:location_detail' location.id %}">
+                                                {{ location.location_name }}
+                                            </a>
+                                        </td>
+                                        <td><code>{{ location.location_code }}</code></td>
+                                        <td>{{ location.get_location_type_display }}</td>
+                                        <td>{{ location.gst_number|default:"-" }}</td>
+                                        <td>
+                                            {% if location.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="{% url 'locations:location_edit' location.id %}"
+                                                   class="btn btn-sm btn-warning">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'locations:location_delete' location.id %}"
+                                                   class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            No locations added yet.
+                                            <a href="{% url 'locations:location_create_for_client' form.instance.id %}" class="btn btn-sm btn-primary">
+                                                Add Location
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-2">
+                            <a href="{% url 'locations:location_create_for_client' form.instance.id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus"></i> Add New Location
+                            </a>
+                        </div>
+                    {% else %}
+                        <!-- Create Mode - Show message -->
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            Locations can be added after creating the client.
+                            <a href="{% url 'locations:location_list' %}" target="_blank" class="alert-link">Manage Locations</a>
+                        </div>
+                    {% endif %}
+
+                    <!-- ========================================== -->
+                    <!-- STATUS                                     -->
+                    <!-- ========================================== -->
                     <h6 class="border-bottom pb-2 mb-3 mt-4 text-secondary">
-                        <i class="fas fa-cog"></i> Status
+                        <i class="fas fa-toggle-on"></i> Status
                     </h6>
                     <div class="row">
-                        <div class="col-md-6">{{ form.is_active|as_crispy_field }}</div>
-                        <div class="col-md-6">{{ form.notes|as_crispy_field }}</div>
+                        <div class="col-md-12">
+                            {{ form.is_active|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.notes|as_crispy_field }}
+                        </div>
                     </div>
 
-                    <!-- Submit Buttons -->
+                    <!-- ========================================== -->
+                    <!-- SUBMIT BUTTONS                            -->
+                    <!-- ========================================== -->
                     <div class="d-grid gap-2 mt-4">
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="fas fa-save"></i> {{ button_text }}
@@ -189,4 +259,44 @@ document.getElementById('id_locations').addEventListener('blur', function() {
         </div>
     </div>
 </div>
+
+<script>
+    // Toggle billing settings visibility
+    document.addEventListener('DOMContentLoaded', function() {
+        const autoBilling = document.getElementById('id_auto_billing_enabled');
+        const billingSettings = document.getElementById('billing-settings');
+
+        if (autoBilling) {
+            autoBilling.addEventListener('change', function() {
+                if (this.checked) {
+                    billingSettings.style.display = 'block';
+                } else {
+                    billingSettings.style.display = 'none';
+                }
+            });
+        }
+    });
+</script>
+
+<style>
+    .form-section {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid #0d6efd;
+    }
+    .form-section.earning {
+        border-left-color: #28a745;
+    }
+    .form-section.deduction {
+        border-left-color: #dc3545;
+    }
+    .form-section.allocation {
+        border-left-color: #17a2b8;
+    }
+    .form-section.other {
+        border-left-color: #6c757d;
+    }
+</style>
 {% endblock %}

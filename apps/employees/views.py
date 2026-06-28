@@ -13,37 +13,6 @@ from .forms import EmployeeForm, EmployeeDocumentForm, EmployeeAssignmentForm
 from apps.clients.models import Client
 from apps.core.decorators import data_entry_or_admin_required
 from apps.core.import_export import ImportExportService
-from apps.clients.models import Client
-
-@login_required
-def employee_list(request):
-    """Employee List View"""
-    employees = Employee.objects.all().order_by('name')
-
-    search = request.GET.get('search')
-    if search:
-        employees = employees.filter(
-            Q(name__icontains=search) |
-            Q(employee_code__icontains=search) |
-            Q(email__icontains=search) |
-            Q(phone__icontains=search)
-        )
-
-    is_active = request.GET.get('is_active')
-    if is_active:
-        employees = employees.filter(is_active=is_active == '1')
-
-    paginator = Paginator(employees, 20)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    context = {
-        'page_obj': page_obj,
-        'search': search,
-        'is_active': is_active,
-        'total_employees': employees.count(),
-    }
-    return render(request, 'employees/employee_list.html', context)
 
 
 @login_required
@@ -85,6 +54,54 @@ def employee_detail(request, pk):
         ],
     }
     return render(request, 'employees/employee_detail.html', context)
+
+
+@login_required
+def employee_list(request):
+    """Employee List View with Active/Inactive Filters"""
+    employees = Employee.objects.all().order_by('name')
+
+    # Search
+    search = request.GET.get('search')
+    if search:
+        employees = employees.filter(
+            Q(name__icontains=search) |
+            Q(employee_code__icontains=search) |
+            Q(email__icontains=search) |
+            Q(phone__icontains=search)
+        )
+
+    # ✅ Active/Inactive Filter
+    is_active = request.GET.get('is_active')
+    if is_active:
+        employees = employees.filter(is_active=is_active == '1')
+
+    # ✅ Has Assignment Filter
+    has_assignment = request.GET.get('has_assignment')
+    if has_assignment == 'no':
+        employees_with_assignment = EmployeeAssignment.objects.filter(
+            is_current=True,
+            status='ACTIVE'
+        ).values_list('employee_id', flat=True)
+        employees = employees.exclude(id__in=employees_with_assignment)
+
+    # Pagination
+    paginator = Paginator(employees, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'search': search,
+        'is_active': is_active,
+        'has_assignment': has_assignment,
+        'total_employees': employees.count(),
+        'breadcrumb': [
+            {'name': 'Dashboard', 'url': '/', 'active': False},
+            {'name': 'Employees', 'active': True},
+        ],
+    }
+    return render(request, 'employees/employee_list.html', context)
 
 
 @login_required
@@ -770,3 +787,68 @@ def get_employee_assignments(request, pk):
         return JsonResponse({'assignments': data})
     except Employee.DoesNotExist:
         return JsonResponse({'error': 'Employee not found'}, status=404)
+
+
+# apps/employees/views.py - Add this view
+
+@login_required
+@data_entry_or_admin_required
+def employee_bulk_delete(request):
+    """Bulk Delete Employees"""
+    if request.method == 'POST':
+        employee_ids = request.POST.getlist('employee_ids')
+
+        if not employee_ids:
+            messages.warning(request, 'No employees selected for deletion.')
+            return redirect('employees:employee_list')
+
+        # Get count before deletion
+        count = Employee.objects.filter(id__in=employee_ids).count()
+
+        # Delete all selected employees
+        Employee.objects.filter(id__in=employee_ids).delete()
+
+        messages.success(request, f'{count} employees deleted successfully!')
+        return redirect('employees:employee_list')
+
+    # GET request - show bulk delete page
+    employees = Employee.objects.all().order_by('name')
+
+    context = {
+        'employees': employees,
+        'total_count': employees.count(),
+        'breadcrumb': [
+            {'name': 'Dashboard', 'url': '/', 'active': False},
+            {'name': 'Employees', 'url': '/employees/', 'active': False},
+            {'name': 'Bulk Delete', 'active': True},
+        ],
+    }
+    return render(request, 'employees/employee_bulk_delete.html', context)
+
+
+@login_required
+@data_entry_or_admin_required
+def employee_bulk_delete_all(request):
+    """Delete ALL Employees (with confirmation)"""
+    if request.method == 'POST':
+        # Get confirmation
+        confirm = request.POST.get('confirm')
+        if confirm and confirm.lower() == 'yes':
+            count = Employee.objects.all().count()
+            Employee.objects.all().delete()
+            messages.success(request, f'All {count} employees deleted successfully!')
+        else:
+            messages.warning(request, 'Deletion cancelled. Please type "YES" to confirm.')
+        return redirect('employees:employee_list')
+
+    # GET request - show confirmation page
+    count = Employee.objects.all().count()
+    context = {
+        'total_count': count,
+        'breadcrumb': [
+            {'name': 'Dashboard', 'url': '/', 'active': False},
+            {'name': 'Employees', 'url': '/employees/', 'active': False},
+            {'name': 'Delete All', 'active': True},
+        ],
+    }
+    return render(request, 'employees/employee_bulk_delete_all.html', context)

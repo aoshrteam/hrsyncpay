@@ -1,0 +1,81 @@
+<!-- templates/locations/location_employee_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:location_list' %}">Locations</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:location_detail' location.id %}">{{ location.location_name }}</a></li>
+    <li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-plus"></i> {{ title }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    <i class="fas fa-info-circle"></i>
+                    Assigning employee to: <strong>{{ location.location_name }}</strong>
+                    <br>
+                    Client: <strong>{{ location.client.name }}</strong>
+                </p>
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> {{ button_text }}
+                        </button>
+                        <a href="{% url 'locations:location_employees' location.id %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set current date as default for start date
+        const startDate = document.getElementById('id_start_date');
+        if (startDate && !startDate.value) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            startDate.value = `${year}-${month}-${day}`;
+        }
+
+        // Check current checkbox        const isCurrent = document.getElementById('id_is_current');
+        const endDate = document.getElementById('id_end_date');
+
+        if (isCurrent) {
+            isCurrent.addEventListener('change', function() {
+                if (this.checked) {
+                    endDate.value = '';
+                    endDate.disabled = true;
+                } else {
+                    endDate.disabled = false;
+                }
+            });
+            // Initial state
+            if (isCurrent.checked) {
+                endDate.disabled = true;
+            }
+        }
+    });
+</script>
+{% endblock %}

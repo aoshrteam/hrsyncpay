@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Sum, Q, Case, When, Value, IntegerField
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.urls import reverse
@@ -15,61 +15,152 @@ from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font, Alignment, PatternFill
 
 from apps.core.decorators import data_entry_or_admin_required
-from apps.employees.models import Employee
+from apps.employees.models import Employee, EmployeeAssignment  # ✅ ADD EmployeeAssignment
 from apps.clients.models import Client
-from apps.payroll.models import PayrollRun, PaymentVoucher
-from apps.attendance.models import AttendanceVoucher
-from apps.leave.models import EmployeeLeave as LeaveRequest
+
+# Try to import optional apps
+try:
+    from apps.payroll.models import PayrollRun, PaymentVoucher
+except ImportError:
+    PayrollRun = None
+    PaymentVoucher = None
+
+try:
+    from apps.attendance.models import AttendanceVoucher
+except ImportError:
+    AttendanceVoucher = None
+
+try:
+    from apps.leave.models import EmployeeLeave as LeaveRequest
+except ImportError:
+    LeaveRequest = None
 
 
 @login_required
 def dashboard(request):
-    """Main Dashboard View"""
-    # Get current month stats
+    """Main Dashboard View with Employee Statistics"""
     today = timezone.now().date()
     month_start = today.replace(day=1)
 
-    context = {
-        'total_employees': Employee.objects.filter(is_active=True).count(),
-        'total_clients': Client.objects.filter(is_active=True).count(),
-    }
+    # ============================================
+    # EMPLOYEE STATISTICS
+    # ============================================
+    total_employees = Employee.objects.count()
+    active_employees = Employee.objects.filter(is_active=True).count()
+    inactive_employees = Employee.objects.filter(is_active=False).count()
 
-    # Add optional stats if apps are installed
+    # ✅ Employees with NO active assignments (Now EmployeeAssignment is defined)
+    employees_without_assignment = Employee.objects.filter(
+        is_active=True
+    ).exclude(
+        id__in=EmployeeAssignment.objects.filter(
+            is_current=True,
+            status='ACTIVE'
+        ).values_list('employee_id', flat=True)
+    ).count()
+
+    # Active employees with current assignments
+    active_assigned = active_employees - employees_without_assignment
+
+    # ============================================
+    # ATTENDANCE STATISTICS
+    # ============================================
+    attendance_stats = {}
     if AttendanceVoucher:
-        # ✅ FIXED: Changed 'month' to 'month_year'
-        context['total_attendance'] = AttendanceVoucher.objects.filter(month_year=month_start).count()
-    else:
-        context['total_attendance'] = 0
+        current_month_attendance = AttendanceVoucher.objects.filter(
+            month_year__year=today.year,
+            month_year__month=today.month
+        ).first()
 
+        if current_month_attendance:
+            attendance_stats = {
+                'present': current_month_attendance.total_present_days or 0,
+                'absent': current_month_attendance.total_absent_days or 0,
+                'leave': current_month_attendance.total_leave_days or 0,
+                'total_employees': current_month_attendance.total_employees or 0,
+            }
+        else:
+            attendance_stats = {'present': 0, 'absent': 0, 'leave': 0, 'total_employees': 0}
+
+    # ============================================
+    # LEAVE STATISTICS
+    # ============================================
+    leave_stats = {}
     if LeaveRequest:
-        context['total_leaves'] = LeaveRequest.objects.filter(
+        pending_leaves = LeaveRequest.objects.filter(status='PENDING').count()
+        approved_leaves = LeaveRequest.objects.filter(
             status='APPROVED',
             start_date__year=today.year,
             start_date__month=today.month
         ).count()
-        context['pending_leaves'] = LeaveRequest.objects.filter(status='PENDING').count()
-    else:
-        context['total_leaves'] = 0
-        context['pending_leaves'] = 0
+        leave_stats = {
+            'pending': pending_leaves,
+            'approved': approved_leaves,
+        }
 
+    # ============================================
+    # PAYROLL STATISTICS
+    # ============================================
+    payroll_stats = {}
     if PayrollRun:
-        # ✅ Check if PayrollRun has 'month' or 'month_year' field
-        context['total_payroll'] = PayrollRun.objects.filter(month_year=month_start).count()
-    else:
-        context['total_payroll'] = 0
+        current_month_payroll = PayrollRun.objects.filter(
+            month_year__year=today.year,
+            month_year__month=today.month
+        ).first()
 
-    if PaymentVoucher:
-        context['total_payments'] = PaymentVoucher.objects.filter(
-            created_at__month=today.month,
-            created_at__year=today.year
-        ).count()
-    else:
-        context['total_payments'] = 0
+        if current_month_payroll:
+            payroll_stats = {
+                'total_employees': current_month_payroll.total_employees or 0,
+                'total_gross': current_month_payroll.total_gross_salary or 0,
+                'total_net': current_month_payroll.total_net_payable or 0,
+            }
+        else:
+            payroll_stats = {'total_employees': 0, 'total_gross': 0, 'total_net': 0}
 
-    context['recent_employees'] = Employee.objects.all().order_by('-created_at')[:5]
-    context['recent_clients'] = Client.objects.all().order_by('-created_at')[:5]
+    # ============================================
+    # RECENT ACTIVITY
+    # ============================================
+    recent_employees = Employee.objects.all().order_by('-created_at')[:5]
+    recent_clients = Client.objects.all().order_by('-created_at')[:5]
+
+    # ============================================
+    # CONTEXT
+    # ============================================
+    context = {
+        # Employee Stats
+        'total_employees': total_employees,
+        'active_employees': active_employees,
+        'inactive_employees': inactive_employees,
+        'employees_without_assignment': employees_without_assignment,
+        'active_assigned': active_assigned,
+        'active_percentage': round((active_employees / total_employees * 100) if total_employees > 0 else 0, 1),
+        'inactive_percentage': round((inactive_employees / total_employees * 100) if total_employees > 0 else 0, 1),
+
+        # Attendance Stats
+        'attendance_stats': attendance_stats,
+
+        # Leave Stats
+        'leave_stats': leave_stats,
+
+        # Payroll Stats
+        'payroll_stats': payroll_stats,
+
+        # Recent Activity
+        'recent_employees': recent_employees,
+        'recent_clients': recent_clients,
+
+        # Optional Flags
+        'attendance_exists': AttendanceVoucher is not None,
+        'payroll_exists': PayrollRun is not None,
+        'leave_exists': LeaveRequest is not None,
+    }
 
     return render(request, 'core/dashboard.html', context)
+
+
+# ============================================
+# REST OF THE VIEWS (import_export_home, etc.)
+# ============================================
 
 @login_required
 @data_entry_or_admin_required
@@ -103,13 +194,12 @@ def import_employees(request):
         from apps.core.import_export import ImportExportService
         result = ImportExportService.import_employees(excel_file, request.user)
 
-        # Store errors in session for export
         if result.get('errors'):
             request.session['import_errors'] = result['errors']
 
         if result['success']:
             messages.success(request,
-                             f"✅ {result['success_count']} employees created, "
+                             f"✅ {result['create_count']} employees created, "
                              f"🔄 {result['update_count']} updated, "
                              f"❌ {result['error_count']} errors"
                              )
@@ -219,26 +309,14 @@ def export_import_errors(request):
 
     if not errors:
         messages.warning(request, 'No errors to export.')
-        return redirect('core:import_export')
+        return redirect('core:import_export_home')
 
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Import Errors"
+    from apps.core.import_export import ImportExportService
+    wb = ImportExportService._export_errors_to_excel(errors)
 
-    # Headers
-    headers = ['Row', 'Column', 'Error', 'Value']
-    for col, header in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col, value=header)
-        cell.font = Font(bold=True)
-        cell.alignment = Alignment(horizontal='center')
-        ws.column_dimensions[get_column_letter(col)].width = 20
-
-    # Data
-    for row_idx, error in enumerate(errors, 2):
-        ws.cell(row=row_idx, column=1, value=error.get('row', ''))
-        ws.cell(row=row_idx, column=2, value=error.get('column', ''))
-        ws.cell(row=row_idx, column=3, value=error.get('error', ''))
-        ws.cell(row=row_idx, column=4, value=error.get('value', ''))
+    if wb is None:
+        messages.warning(request, 'No errors to export.')
+        return redirect('core:import_export_home')
 
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -246,8 +324,8 @@ def export_import_errors(request):
     response['Content-Disposition'] = 'attachment; filename=Import_Errors.xlsx'
     wb.save(response)
 
-    # Clear errors from session after export
-    del request.session['import_errors']
+    if 'import_errors' in request.session:
+        del request.session['import_errors']
 
     return response
 
@@ -279,6 +357,75 @@ def download_client_sample(request):
     wb.save(response)
     return response
 
+
+@login_required
+@data_entry_or_admin_required
+def import_assignments(request):
+    """Import Employee Assignments from Excel"""
+    if request.method == 'POST':
+        if not request.FILES.get('excel_file'):
+            messages.error(request, 'Please select an Excel file.')
+            return redirect('core:import_assignments')
+
+        excel_file = request.FILES['excel_file']
+
+        if not excel_file.name.endswith(('.xlsx', '.xls')):
+            messages.error(request, 'Please upload a valid Excel file (.xlsx or .xls).')
+            return redirect('core:import_assignments')
+
+        from apps.core.import_export import ImportExportService
+        result = ImportExportService.import_assignments(excel_file, request.user)
+
+        if result.get('errors'):
+            request.session['import_errors'] = result['errors']
+
+        if result['success']:
+            messages.success(request,
+                             f"✅ {result['create_count']} assignments created, "
+                             f"🔄 {result['update_count']} updated, "
+                             f"❌ {result['error_count']} errors"
+                             )
+            if result['errors']:
+                messages.warning(request, f"{len(result['errors'])} errors occurred.")
+                error_url = reverse('core:export_import_errors')
+                messages.info(request,
+                              f'<a href="{error_url}" class="btn btn-sm btn-danger" target="_blank">'
+                              f'<i class="fas fa-file-excel"></i> 📥 Download Error Report</a>'
+                              )
+        else:
+            messages.error(request, result.get('message', 'Import failed'))
+
+        return redirect('employees:employee_list')
+
+    context = {
+        'title': 'Import Employee Assignments',
+        'import_type': 'assignments',
+        'breadcrumb': [
+            {'name': 'Dashboard', 'url': '/dashboard/', 'active': False},
+            {'name': 'Import/Export', 'url': '/import-export/', 'active': False},
+            {'name': 'Import Assignments', 'active': True},
+        ],
+    }
+    return render(request, 'core/import_export.html', context)
+
+
+@login_required
+def download_assignment_sample(request):
+    """Download Assignment Import Sample Template"""
+    from apps.core.import_export import ImportExportService
+    wb = ImportExportService.get_assignment_sample_template()
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=Assignment_Import_Sample.xlsx'
+    wb.save(response)
+    return response
+
+
+# ============================================
+# OTHER VIEWS (Notifications, Profile, etc.)
+# ============================================
 
 @login_required
 def notifications(request):
@@ -316,7 +463,6 @@ def user_profile(request):
 def user_profile_edit(request):
     """Edit User Profile"""
     if request.method == 'POST':
-        # Update user profile logic
         messages.success(request, 'Profile updated successfully!')
         return redirect('core:user_profile')
 
@@ -476,9 +622,16 @@ def dashboard_stats(request):
     data = {
         'total_employees': Employee.objects.filter(is_active=True).count(),
         'total_clients': Client.objects.filter(is_active=True).count(),
-        'total_payroll': PayrollRun.objects.filter(month=month_start).count(),
-        'pending_leaves': LeaveRequest.objects.filter(status='PENDING').count(),
+        'total_payroll': 0,
+        'pending_leaves': 0,
     }
+
+    if PayrollRun:
+        data['total_payroll'] = PayrollRun.objects.filter(month_year=month_start).count()
+
+    if LeaveRequest:
+        data['pending_leaves'] = LeaveRequest.objects.filter(status='PENDING').count()
+
     return JsonResponse(data)
 
 
@@ -496,3 +649,16 @@ def back_navigation(request):
     if referer:
         return redirect(referer)
     return redirect('core:dashboard')
+
+# apps/core/views.py - Add this view
+
+@login_required
+@data_entry_or_admin_required
+def clear_import_errors(request):
+    """Clear import errors from session"""
+    if request.method == 'POST':
+        if 'import_errors' in request.session:
+            del request.session['import_errors']
+            request.session.modified = True
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'}, status=400)

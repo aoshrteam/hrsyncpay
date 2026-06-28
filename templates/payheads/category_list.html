@@ -1,35 +1,41 @@
-<!-- templates/payheads/category_list.html -->
+<!-- templates/payheads/payhead_list.html -->
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Payhead Categories - HRSyncPay{% endblock %}
+{% block title %}Payhead Management - HRSyncPay{% endblock %}
 
 {% block extra_css %}
 <style>
-    .category-card {
+    .payhead-card {
         transition: all 0.3s ease;
         border-left: 4px solid #6c757d;
     }
-    .category-card:hover {
+    .payhead-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     }
-    .category-card.earning {
+    .payhead-card.earning {
         border-left-color: #28a745;
     }
-    .category-card.deduction {
+    .payhead-card.deduction {
         border-left-color: #dc3545;
     }
-    .category-card.allowance {
-        border-left-color: #17a2b8;
-    }
-    .category-card.bonus {
-        border-left-color: #ffc107;
-    }
-    .category-card.reimbursement {
+    .payhead-card.statutory {
         border-left-color: #fd7e14;
     }
-    .category-card.other {
+    .payhead-card.loan {
+        border-left-color: #6f42c1;
+    }
+    .payhead-card.bonus {
+        border-left-color: #ffc107;
+    }
+    .payhead-card.allowance {
+        border-left-color: #17a2b8;
+    }
+    .payhead-card.reimbursement {
+        border-left-color: #20c997;
+    }
+    .payhead-card.other {
         border-left-color: #6c757d;
     }
     .stat-badge {
@@ -43,16 +49,16 @@
     .card-header h5 {
         color: white;
     }
+    .type-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+    }
 </style>
 {% endblock %}
 
 {% block breadcrumb %}
     <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
-    <li class="breadcrumb-item"><a href="{% url 'payheads:payhead_list' %}">Payheads</a></li>
-    {% if client %}
-        <li class="breadcrumb-item"><a href="{% url 'clients:client_detail' client.id %}">{{ client.name }}</a></li>
-    {% endif %}
-    <li class="breadcrumb-item active">Categories</li>
+    <li class="breadcrumb-item active">Payhead Management</li>
 {% endblock %}
 
 {% block content %}
@@ -61,23 +67,11 @@
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4>
-                <i class="fas fa-tags"></i> Payhead Categories
-                {% if client %}
-                    <small class="text-muted">- {{ client.name }}</small>
-                {% endif %}
+                <i class="fas fa-coins"></i> Global Payheads
             </h4>
             <div>
-                {% if client %}
-                    <a href="{% url 'payheads:category_create_for_client' client.id %}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> New Category
-                    </a>
-                {% else %}
-                    <a href="{% url 'payheads:category_create' %}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> New Category
-                    </a>
-                {% endif %}
-                <a href="{% url 'payheads:payhead_list' %}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Payheads
+                <a href="{% url 'payheads:payhead_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Payhead
                 </a>
             </div>
         </div>
@@ -87,27 +81,7 @@
             <div class="col-md-3">
                 <div class="card text-center">
                     <div class="card-body">
-                        <h5 class="card-title">{{ categories.count }}</h5>
-                        <p class="card-text text-muted">Total Categories</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h5 class="card-title text-success">
-                            {{ categories|length }}
-                        </h5>
-                        <p class="card-text text-muted">Active Categories</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h5 class="card-title text-primary">
-                            {{ total_payheads|default:0 }}
-                        </h5>
+                        <h5 class="card-title">{{ payheads|length }}</h5>
                         <p class="card-text text-muted">Total Payheads</p>
                     </div>
                 </div>
@@ -115,92 +89,109 @@
             <div class="col-md-3">
                 <div class="card text-center">
                     <div class="card-body">
-                        <h5 class="card-title text-info">
-                            {{ categories|length }}
-                        </h5>
-                        <p class="card-text text-muted">Categories</p>
+                        <h5 class="card-title text-success">{{ earnings|length }}</h5>
+                        <p class="card-text text-muted">Earnings</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-danger">{{ deductions|length }}</h5>
+                        <p class="card-text text-muted">Deductions</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-warning">{{ statutory|length }}</h5>
+                        <p class="card-text text-muted">Statutory</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Category List -->
+        <!-- Payhead Cards -->
         <div class="row">
-            {% if categories %}
-                {% for category in categories %}
+            {% if payheads %}
+                {% for payhead in payheads %}
                     <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="card category-card {% if category.category_type == 'EARNING' %}earning{% elif category.category_type == 'DEDUCTION' %}deduction{% elif category.category_type == 'ALLOWANCE' %}allowance{% elif category.category_type == 'BONUS' %}bonus{% elif category.category_type == 'REIMBURSEMENT' %}reimbursement{% else %}other{% endif %}">
+                        <div class="card payhead-card
+                            {% if payhead.type == 'EARNING' %}earning
+                            {% elif payhead.type == 'DEDUCTION' %}deduction
+                            {% elif payhead.type == 'STATUTORY_DEDUCTION' %}statutory
+                            {% elif payhead.type == 'LOAN' %}loan
+                            {% elif payhead.type == 'BONUS' %}bonus
+                            {% elif payhead.type == 'ALLOWANCE' %}allowance
+                            {% elif payhead.type == 'REIMBURSEMENT' %}reimbursement
+                            {% else %}other{% endif %}">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <h5 class="card-title">
                                             <i class="fas
-                                                {% if category.category_type == 'EARNING' %}fa-arrow-up text-success
-                                                {% elif category.category_type == 'DEDUCTION' %}fa-arrow-down text-danger
-                                                {% elif category.category_type == 'ALLOWANCE' %}fa-hand-holding-usd text-info
-                                                {% elif category.category_type == 'BONUS' %}fa-gift text-warning
-                                                {% elif category.category_type == 'REIMBURSEMENT' %}fa-money-bill-wave text-orange
+                                                {% if payhead.type == 'EARNING' %}fa-arrow-up text-success
+                                                {% elif payhead.type == 'DEDUCTION' %}fa-arrow-down text-danger
+                                                {% elif payhead.type == 'STATUTORY_DEDUCTION' %}fa-shield-alt text-warning
+                                                {% elif payhead.type == 'LOAN' %}fa-hand-holding-usd text-purple
+                                                {% elif payhead.type == 'BONUS' %}fa-gift text-warning
+                                                {% elif payhead.type == 'ALLOWANCE' %}fa-hand-holding-heart text-info
+                                                {% elif payhead.type == 'REIMBURSEMENT' %}fa-money-bill-wave text-teal
                                                 {% else %}fa-tag text-secondary
                                                 {% endif %}
                                             "></i>
-                                            {{ category.name }}
+                                            {{ payhead.name }}
                                         </h5>
                                         <h6 class="card-subtitle mb-2 text-muted">
                                             <span class="badge
-                                                {% if category.category_type == 'EARNING' %}bg-success
-                                                {% elif category.category_type == 'DEDUCTION' %}bg-danger
-                                                {% elif category.category_type == 'ALLOWANCE' %}bg-info
-                                                {% elif category.category_type == 'BONUS' %}bg-warning
-                                                {% elif category.category_type == 'REIMBURSEMENT' %}bg-orange
+                                                {% if payhead.type == 'EARNING' %}bg-success
+                                                {% elif payhead.type == 'DEDUCTION' %}bg-danger
+                                                {% elif payhead.type == 'STATUTORY_DEDUCTION' %}bg-warning
+                                                {% elif payhead.type == 'LOAN' %}bg-purple
+                                                {% elif payhead.type == 'BONUS' %}bg-info
+                                                {% elif payhead.type == 'ALLOWANCE' %}bg-primary
+                                                {% elif payhead.type == 'REIMBURSEMENT' %}bg-teal
                                                 {% else %}bg-secondary
                                                 {% endif %}
-                                            ">
-                                                {{ category.get_category_type_display }}
+                                            type-badge">
+                                                {{ payhead.get_type_display }}
                                             </span>
-                                            {% if not category.is_active %}
-                                                <span class="badge bg-secondary">Inactive</span>
+                                            {% if not payhead.is_active %}
+                                                <span class="badge bg-secondary type-badge">Inactive</span>
                                             {% endif %}
                                         </h6>
-                                        {% if category.description %}
-                                            <p class="card-text small">{{ category.description|truncatechars:100 }}</p>
+                                        {% if payhead.description %}
+                                            <p class="card-text small">{{ payhead.description|truncatechars:100 }}</p>
+                                        {% endif %}
+                                        {% if payhead.code %}
+                                            <small class="text-muted">Code: <code>{{ payhead.code }}</code></small>
                                         {% endif %}
                                     </div>
                                     <div>
-                                        <span class="badge bg-primary stat-badge">
-                                            <i class="fas fa-list"></i> {{ category.payheads.count }}
+                                        <span class="badge bg-secondary stat-badge">
+                                            <i class="fas fa-sort"></i> {{ payhead.display_order|default:"0" }}
                                         </span>
                                     </div>
                                 </div>
 
-                                <!-- Client info -->
-                                <div class="mt-2">
-                                    <small class="text-muted">
-                                        <i class="fas fa-building"></i> {{ category.client.name }}
-                                    </small>
-                                    {% if category.sort_order %}
-                                        <small class="text-muted ms-2">
-                                            <i class="fas fa-sort"></i> {{ category.sort_order }}
-                                        </small>
-                                    {% endif %}
-                                </div>
-
                                 <!-- Actions -->
                                 <div class="mt-3">
-                                    <a href="{% url 'payheads:category_edit' category.id %}" class="btn btn-sm btn-outline-primary">
+                                    <a href="{% url 'payheads:payhead_edit' payhead.id %}" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-edit"></i> Edit
                                     </a>
-                                    <a href="{% url 'payheads:category_delete' category.id %}" class="btn btn-sm btn-outline-danger">
+                                    <a href="{% url 'payheads:payhead_delete' payhead.id %}" class="btn btn-sm btn-outline-danger">
                                         <i class="fas fa-trash"></i> Delete
                                     </a>
-                                    {% if category.payheads.exists %}
-                                        <a href="{% url 'payheads:payhead_list_by_client' category.client.id %}" class="btn btn-sm btn-outline-info">
-                                            <i class="fas fa-eye"></i> View Payheads
-                                        </a>
-                                    {% endif %}
+                                    <a href="{% url 'payheads:payhead_toggle_status' payhead.id %}"
+                                       class="btn btn-sm {% if payhead.is_active %}btn-outline-secondary{% else %}btn-outline-success{% endif %}"
+                                       onclick="return confirm('Toggle payhead status?')">
+                                        <i class="fas {% if payhead.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>
+                                    </a>
                                 </div>
                             </div>
                             <div class="card-footer text-muted small">
-                                <i class="fas fa-clock"></i> Updated: {{ category.updated_at|date:"Y-m-d H:i" }}
+                                <i class="fas fa-clock"></i> Updated: {{ payhead.updated_at|date:"Y-m-d H:i" }}
                             </div>
                         </div>
                     </div>
@@ -209,26 +200,20 @@
                 <div class="col-md-12">
                     <div class="alert alert-info text-center">
                         <i class="fas fa-info-circle fa-2x d-block mb-2"></i>
-                        <h5>No Categories Found</h5>
-                        <p>Create your first payhead category to get started.</p>
-                        {% if client %}
-                            <a href="{% url 'payheads:category_create_for_client' client.id %}" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> Create Category
-                            </a>
-                        {% else %}
-                            <a href="{% url 'payheads:category_create' %}" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> Create Category
-                            </a>
-                        {% endif %}
+                        <h5>No Payheads Found</h5>
+                        <p>Create your first payhead to get started.</p>
+                        <a href="{% url 'payheads:payhead_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create Payhead
+                        </a>
                     </div>
                 </div>
             {% endif %}
         </div>
 
-        <!-- Category Types Legend -->
+        <!-- Payhead Types Legend -->
         <div class="card mt-4">
             <div class="card-header">
-                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Category Types Legend</h6>
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Payhead Types Legend</h6>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -241,20 +226,20 @@
                         <small class="text-muted d-block">Deduction components</small>
                     </div>
                     <div class="col-md-2">
-                        <span class="badge bg-info">ALLOWANCE</span>
-                        <small class="text-muted d-block">Allowance components</small>
+                        <span class="badge bg-warning">STATUTORY</span>
+                        <small class="text-muted d-block">Statutory deductions</small>
                     </div>
                     <div class="col-md-2">
-                        <span class="badge bg-warning">BONUS</span>
+                        <span class="badge bg-purple">LOAN</span>
+                        <small class="text-muted d-block">Loan recoveries</small>
+                    </div>
+                    <div class="col-md-2">
+                        <span class="badge bg-info">BONUS</span>
                         <small class="text-muted d-block">Bonus components</small>
                     </div>
                     <div class="col-md-2">
-                        <span class="badge bg-orange">REIMBURSEMENT</span>
-                        <small class="text-muted d-block">Reimbursement components</small>
-                    </div>
-                    <div class="col-md-2">
-                        <span class="badge bg-secondary">OTHER</span>
-                        <small class="text-muted d-block">Other components</small>
+                        <span class="badge bg-primary">ALLOWANCE</span>
+                        <small class="text-muted d-block">Allowance components</small>
                     </div>
                 </div>
             </div>

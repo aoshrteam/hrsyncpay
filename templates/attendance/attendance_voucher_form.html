@@ -11,60 +11,42 @@
     <li class="breadcrumb-item active">{{ title }}</li>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const monthInput = document.getElementById('id_month');
+    if (monthInput && !monthInput.value) {
+        const now = new Date();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        monthInput.value = `${year}-${month}`;
+    }
+});
+</script>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
+<div class="row">
+    <div class="col-md-6 mx-auto">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0"><i class="fas fa-plus-circle"></i> {{ title }}</h5>
+                <h5 class="mb-0"><i class="fas fa-calendar-plus"></i> {{ title }}</h5>
             </div>
             <div class="card-body">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>Note:</strong> After creating the voucher, you can add employees or import attendance from Excel.
-                </div>
-
-                <form method="post" action="{% url 'attendance:attendance_voucher_create' %}">
+                <form method="post">
                     {% csrf_token %}
 
-                    <!-- Month & Year Field -->
-                    <div class="mb-3">
-                        <label for="id_month_year_input" class="form-label">Month & Year *</label>
-                        <input type="month" name="month_year_input" id="id_month_year_input"
-                               class="form-control" value="{{ form.month_year_input.value|default:'' }}">
-                        <div class="form-text">Select month and year (e.g., 2026-06)</div>
-                        {% if form.month_year_input.errors %}
-                            <div class="text-danger">{{ form.month_year_input.errors }}</div>
-                        {% endif %}
+                    <!-- ✅ Use month field -->
+                    {{ form.client|as_crispy_field }}
+                    {{ form.month|as_crispy_field }}
+                    {{ form.status|as_crispy_field }}
+                    
+                    <div class="alert alert-info small mt-3">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Note:</strong> Month selection will create a voucher for the entire month.
+                        You can import attendance data after creation.
                     </div>
-
-                    <!-- Client Field -->
-                    <div class="mb-3">
-                        <label for="id_client" class="form-label">Client *</label>
-                        <select name="client" id="id_client" class="form-control">
-                            <option value="">---------</option>
-                            {% for client in form.fields.client.queryset %}
-                                <option value="{{ client.id }}" {% if form.client.value == client.id %}selected{% endif %}>
-                                    {{ client.name }} ({{ client.code }})
-                                </option>
-                            {% endfor %}
-                        </select>
-                        <div class="form-text">Select the client for this attendance</div>
-                        {% if form.client.errors %}
-                            <div class="text-danger">{{ form.client.errors }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <strong>After creating this voucher:</strong>
-                        <ul class="mb-0 mt-1">
-                            <li>Go to Voucher Detail page</li>
-                            <li>Click <strong>"Add Employee"</strong> to add attendance</li>
-                            <li>OR click <strong>"Import Excel"</strong> for bulk import</li>
-                        </ul>
-                    </div>
-
+                    
                     <div class="d-grid gap-2 mt-3">
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="fas fa-save"></i> {{ button_text }}
@@ -78,17 +60,4 @@
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Set default month to current month if empty
-    const monthInput = document.getElementById('id_month_year_input');
-    if (monthInput && !monthInput.value) {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        monthInput.value = year + '-' + month;
-    }
-});
-</script>
 {% endblock %}

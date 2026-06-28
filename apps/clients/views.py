@@ -15,6 +15,8 @@ from .models import Client
 from apps.core.decorators import data_entry_or_admin_required
 
 
+# apps/clients/views.py
+
 @login_required
 def client_list(request):
     """Client List View"""
@@ -25,8 +27,7 @@ def client_list(request):
         clients = clients.filter(
             Q(name__icontains=search) |
             Q(code__icontains=search) |
-            Q(contact_person__icontains=search) |
-            Q(contact_email__icontains=search)
+            Q(contact_person__icontains=search)
         )
 
     paginator = Paginator(clients, 20)
@@ -34,12 +35,11 @@ def client_list(request):
     page_obj = paginator.get_page(page_number)
 
     context = {
-        'page_obj': page_obj,
+        'page_obj': page_obj,  # ✅ यह सही है - इसमें client.id होगा
         'search': search,
         'total_clients': clients.count(),
     }
     return render(request, 'clients/client_list.html', context)
-
 
 @login_required
 # @data_entry_or_admin_required  # Commented for now
@@ -62,13 +62,47 @@ def client_create(request):
     return render(request, 'clients/client_form.html', context)
 
 
+# apps/clients/views.py
+
+# apps/clients/views.py
+
 @login_required
 def client_detail(request, pk):
-    """Client Detail View"""
+    """Client Detail View with Assignments Count"""
     client = get_object_or_404(Client, pk=pk)
+
+    # ✅ Get all assignments for this client
+    assignments = client.assignments.filter(is_current=True)
+
+    # ✅ Get location-wise employee count
+    locations = client.client_locations.filter(is_active=True)
+    for location in locations:
+        location.employee_count = location.assignments.filter(
+            is_current=True,
+            employee__is_active=True
+        ).values('employee').distinct().count()
+
+    # ✅ Prepare assignment data with employee code
+    assignment_data = []
+    for assignment in assignments:
+        assignment_data.append({
+            'id': assignment.id,
+            'employee': assignment.employee,
+            'employee_code': assignment.employee.employee_code,  # ✅ Add employee_code
+            'master_code': assignment.employee.master_code,  # Keep if needed
+            'employee_name': assignment.employee.name,
+            'location': assignment.location,
+            'start_date': assignment.start_date,
+            'status': assignment.status,
+            'is_current': assignment.is_current,
+        })
 
     context = {
         'client': client,
+        'assignments': assignments,
+        'assignment_data': assignment_data,  # ✅ Pass to template
+        'locations': locations,
+        'total_employees': assignments.values('employee').distinct().count(),
         'breadcrumb': [
             {'name': 'Dashboard', 'url': '/', 'active': False},
             {'name': 'Clients', 'url': '/clients/', 'active': False},
@@ -76,7 +110,6 @@ def client_detail(request, pk):
         ],
     }
     return render(request, 'clients/client_detail.html', context)
-
 
 @login_required
 # @data_entry_or_admin_required  # Commented for now

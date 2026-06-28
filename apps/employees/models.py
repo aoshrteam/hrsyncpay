@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from apps.clients.models import Client
 
 
+
 class Employee(models.Model):
     GENDER_CHOICES = [
         ('M', 'Male'),
@@ -13,7 +14,7 @@ class Employee(models.Model):
     # ============================================
     # MASTER CODE (Permanent, Never Changes)
     # ============================================
-    master_code = models.CharField(max_length=20, unique=True, blank=True, null=True)  # ✅ This field
+    master_code = models.CharField(max_length=20, unique=True, blank=True, null=True)
 
     # ============================================
     # PERSONAL DETAILS
@@ -190,13 +191,11 @@ class Employee(models.Model):
         """Get all salary heads (Fixed + Dynamic)"""
         all_heads = {}
 
-        # Fixed heads
         if self.basic_pay and self.basic_pay > 0:
             all_heads['Basic Pay'] = float(self.basic_pay)
         if self.hra and self.hra > 0:
             all_heads['HRA'] = float(self.hra)
 
-        # Dynamic heads
         if self.dynamic_salary_heads:
             for key, value in self.dynamic_salary_heads.items():
                 if value and float(value) > 0:
@@ -208,7 +207,6 @@ class Employee(models.Model):
         """Get all deductions (Fixed + Dynamic)"""
         all_deductions = {}
 
-        # Fixed deductions
         if self.loan_deduction and self.loan_deduction > 0:
             all_deductions['Loan'] = float(self.loan_deduction)
         if self.advance_deduction and self.advance_deduction > 0:
@@ -216,7 +214,6 @@ class Employee(models.Model):
         if self.professional_tax and self.professional_tax > 0:
             all_deductions['Professional Tax'] = float(self.professional_tax)
 
-        # Dynamic deductions
         if self.dynamic_deductions:
             for key, value in self.dynamic_deductions.items():
                 if value and float(value) > 0:
@@ -314,7 +311,9 @@ class EmployeeDocument(models.Model):
         ordering = ['-upload_date']
 
 
-# apps/employees/models.py - Updated EmployeeAssignment
+# ============================================
+# ✅ EmployeeAssignment - SINGLE DEFINITION
+# ============================================
 
 class EmployeeAssignment(models.Model):
     SALARY_METHOD_CHOICES = [
@@ -344,8 +343,19 @@ class EmployeeAssignment(models.Model):
         ('TRANSFERRED', 'Transferred'),
     ]
 
+    # Core Fields
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='assignments')
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='assignments')
+
+    # ✅ Location Field (New)
+    location = models.ForeignKey(
+        'locations.Location',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assignments',
+        help_text="Location where employee works"
+    )
 
     # Period
     start_date = models.DateField()
@@ -359,8 +369,6 @@ class EmployeeAssignment(models.Model):
     per_day_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     rate_per_unit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
-    # ❌ REMOVED: special_allowance, conveyance_allowance, other_allowance (Now Dynamic)
-
     # Statutory Rules
     pf_cap = models.CharField(max_length=20, choices=PF_CAP_CHOICES, default='CAPPED_15000')
     esi_rule = models.CharField(max_length=10, choices=ESI_RULE_CHOICES, default='AUTO')
@@ -372,15 +380,15 @@ class EmployeeAssignment(models.Model):
 
     # Other
     professional_tax_exempt = models.BooleanField(default=False)
-    other_deductions = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Static deduction
+    other_deductions = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
-    # ✅ Dynamic Payheads (JSON Field)
+    # Dynamic Payheads (JSON Field)
     salary_heads = models.JSONField(default=dict, blank=True, help_text="Dynamic salary heads")
-    # Format: {"earnings": {"Basic": 25000, "HRA": 10000, "DA": 5000}, "deductions": {"Insurance": 500, "Advance": 1000}}
 
     # Status
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
 
+    # Audit
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -404,6 +412,13 @@ class EmployeeAssignment(models.Model):
         for amount in deductions.values():
             total += amount
         return total
+
+    @property
+    def location_display(self):
+        """Get location display name"""
+        if self.location:
+            return self.location.display_name
+        return "Not Assigned"
 
     def save(self, *args, **kwargs):
         if not self.effective_date:

@@ -1,0 +1,23 @@
+New-Item -ItemType File -Force -Path models.py
+New-Item -ItemType File -Force -Path views.py
+New-Item -ItemType File -Force -Path serializers.py
+New-Item -ItemType File -Force -Path forms.py
+New-Item -ItemType File -Force -Path admin.py
+New-Item -ItemType File -Force -Path urls.py
+New-Item -ItemType File -Force -Path apps.py
+New-Item -ItemType File -Force -Path signals.py
+New-Item -ItemType File -Force -Path tests.py
+New-Item -ItemType File -Force -Path __init__.py
+New-Item -ItemType File -Force -Path migrations\__init__.py
+
+in apps (name folder)
+
+python manage.py makemigrations payheads
+python manage.py migrate payheads
+python manage.py migrate
+
+
+
+git add .
+git commit -m "नया बदलाव या फीचर का नाम"
+git push origin main

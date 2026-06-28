@@ -13,96 +13,47 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-md-10 mx-auto">
+    <div class="col-md-8 mx-auto">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">{{ title }}</h5>
+                <h5 class="card-title mb-0"><i class="fas fa-coins"></i> {{ title }}</h5>
             </div>
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
 
-                    <!-- Basic Details -->
                     <h6 class="border-bottom pb-2 mb-3 text-primary">
                         <i class="fas fa-info-circle"></i> Basic Details
                     </h6>
                     <div class="row">
-                        <div class="col-md-4">
-                            {{ form.client|as_crispy_field }}
-                        </div>
-                        <div class="col-md-4">
-                            {{ form.name|as_crispy_field }}
-                        </div>
-                        <div class="col-md-4">
-                            {{ form.type|as_crispy_field }}
-                        </div>
+                        <div class="col-md-12">{{ form.name|as_crispy_field }}</div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6">
-                            {{ form.category|as_crispy_field }}
-                        </div>
-                        <div class="col-md-6">
-                            {{ form.code|as_crispy_field }}
-                        </div>
+                        <div class="col-md-6">{{ form.type|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ form.code|as_crispy_field }}</div>
                     </div>
                     <div class="row">
-                        <div class="col-md-12">
-                            {{ form.description|as_crispy_field }}
-                        </div>
+                        <div class="col-md-12">{{ form.description|as_crispy_field }}</div>
                     </div>
 
-                    <!-- Calculation Settings -->
-                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-success">
-                        <i class="fas fa-calculator"></i> Calculation Settings
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-secondary">
+                        <i class="fas fa-cog"></i> Display Settings
                     </h6>
                     <div class="row">
-                        <div class="col-md-4">
-                            {{ form.calculation_type|as_crispy_field }}
-                        </div>
-                        <div class="col-md-4">
-                            {{ form.default_value|as_crispy_field }}
-                        </div>
-                        <div class="col-md-4">
-                            {{ form.display_order|as_crispy_field }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4">
-                            {{ form.min_value|as_crispy_field }}
-                        </div>
-                        <div class="col-md-4">
-                            {{ form.max_value|as_crispy_field }}
-                        </div>
-                        <div class="col-md-4">
-                            {{ form.is_active|as_crispy_field }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            {{ form.formula|as_crispy_field }}
-                        </div>
+                        <div class="col-md-6">{{ form.display_order|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ form.is_active|as_crispy_field }}</div>
                     </div>
 
-                    <!-- Statutory Settings -->
-                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-danger">
-                        <i class="fas fa-shield-alt"></i> Statutory Settings
-                    </h6>
-                    <div class="row">
-                        <div class="col-md-3">
-                            {{ form.is_statutory|as_crispy_field }}
-                        </div>
-                        <div class="col-md-3">
-                            {{ form.is_taxable|as_crispy_field }}
-                        </div>
-                        <div class="col-md-3">
-                            {{ form.is_mandatory|as_crispy_field }}
-                        </div>
-                        <div class="col-md-3">
-                            {{ form.requires_approval|as_crispy_field }}
-                        </div>
+                    <div class="alert alert-info mt-3">
+                        <strong>Preview:</strong>
+                        <span class="badge bg-secondary" id="preview-name">
+                            {% if form.instance.name %}{{ form.instance.name }}{% else %}New Payhead{% endif %}
+                        </span>
+                        <span class="badge bg-primary" id="preview-type">
+                            {% if form.instance.type %}{{ form.instance.get_type_display }}{% else %}Earning{% endif %}
+                        </span>
                     </div>
 
-                    <!-- Submit Buttons -->
                     <div class="d-grid gap-2 mt-4">
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="fas fa-save"></i> {{ button_text }}
@@ -116,28 +67,23 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
-    // Show/hide formula field based on calculation type
     document.addEventListener('DOMContentLoaded', function() {
-        const calcType = document.getElementById('id_calculation_type');
-        const formulaField = document.getElementById('div_id_formula');
+        const nameField = document.getElementById('id_name');
+        const typeField = document.getElementById('id_type');
+        const previewName = document.getElementById('preview-name');
+        const previewType = document.getElementById('preview-type');
 
-        function toggleFormula() {
-            if (calcType && formulaField) {
-                if (calcType.value === 'FORMULA') {
-                    formulaField.style.display = 'block';
-                } else {
-                    formulaField.style.display = 'none';
-                }
-            }
+        if (nameField) {
+            nameField.addEventListener('input', function() {
+                previewName.textContent = this.value || 'New Payhead';
+            });
         }
-
-        if (calcType) {
-            calcType.addEventListener('change', toggleFormula);
-            toggleFormula();
+        if (typeField) {
+            typeField.addEventListener('change', function() {
+                previewType.textContent = this.options[this.selectedIndex].text || 'Earning';
+            });
         }
     });
 </script>

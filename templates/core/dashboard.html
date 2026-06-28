@@ -9,68 +9,226 @@
 {% endblock %}
 
 {% block content %}
-<!-- Summary Cards -->
+<!-- ========================================== -->
+<!-- EMPLOYEE STATISTICS CARDS                 -->
+<!-- ========================================== -->
 <div class="row g-4 mb-4">
+    <!-- Total Employees -->
     <div class="col-md-3">
-        <div class="card text-white bg-primary">
+        <div class="card text-white bg-primary h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="card-title">Total Employees</h6>
                         <h2 class="mb-0">{{ total_employees }}</h2>
+                        <small>
+                            <i class="fas fa-user-check"></i> Active: {{ active_employees }}
+                            <br>
+                            <i class="fas fa-user-times"></i> Inactive: {{ inactive_employees }}
+                        </small>
                     </div>
-                    <i class="fas fa-users fa-2x opacity-50"></i>
+                    <i class="fas fa-users fa-3x opacity-50"></i>
+                </div>
+                <div class="mt-2">
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" role="progressbar"
+                             style="width: {{ active_percentage }}%"></div>
+                        <div class="progress-bar bg-warning" role="progressbar"
+                             style="width: {{ zero_attendance_percentage }}%"></div>
+                        <div class="progress-bar bg-danger" role="progressbar"
+                             style="width: {{ inactive_percentage }}%"></div>
+                    </div>
+                    <small class="text-light">
+                        Active: {{ active_percentage }}% | Zero Att: {{ zero_attendance_percentage }}% | Inactive: {{ inactive_percentage }}%
+                    </small>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Active Employees -->
     <div class="col-md-3">
-        <div class="card text-white bg-success">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title">Total Clients</h6>
-                        <h2 class="mb-0">{{ total_clients }}</h2>
+        <a href="{% url 'employees:employee_list' %}?is_active=1&has_attendance=yes" class="text-decoration-none">
+            <div class="card text-white bg-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Active Employees</h6>
+                            <h2 class="mb-0">{{ active_with_attendance }}</h2>
+                            <small>
+                                <i class="fas fa-check-circle"></i> With Attendance
+                            </small>
+                        </div>
+                        <i class="fas fa-user-check fa-3x opacity-50"></i>
                     </div>
-                    <i class="fas fa-building fa-2x opacity-50"></i>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
+    <!-- Zero Attendance - HR Action Required -->
     <div class="col-md-3">
-        <div class="card text-white bg-warning">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title">Pending Payments</h6>
-                        <h2 class="mb-0">₹{{ total_pending|floatformat:0 }}</h2>
-                        <small>{{ pending_employees }} employees</small>
+        <a href="{% url 'employees:employee_list' %}?zero_attendance=yes" class="text-decoration-none">
+            <div class="card text-white bg-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">
+                                ⚠️ Zero Attendance
+                                <span class="badge bg-danger text-white">HR Action</span>
+                            </h6>
+                            <h2 class="mb-0">{{ zero_attendance_count }}</h2>
+                            <small>
+                                <i class="fas fa-user-clock"></i> Need to contact
+                                <br>
+                                <i class="fas fa-percent"></i> {{ zero_attendance_percentage }}% of total
+                            </small>
+                        </div>
+                        <i class="fas fa-user-clock fa-3x opacity-50"></i>
                     </div>
-                    <i class="fas fa-hourglass-half fa-2x opacity-50"></i>
+                    <div class="mt-2">
+                        <small class="text-light">
+                            <i class="fas fa-phone"></i> Call & confirm status
+                        </small>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
+    <!-- Without Assignment -->
     <div class="col-md-3">
-        <div class="card text-white bg-info">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title">Current Month Salary</h6>
-                        <h2 class="mb-0">₹{{ current_month_salary|floatformat:0 }}</h2>
-                        <small>{{ current_month }}</small>
+        <a href="{% url 'employees:employee_list' %}?has_assignment=no" class="text-decoration-none">
+            <div class="card text-white bg-info h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Without Assignment</h6>
+                            <h2 class="mb-0">{{ without_assignment }}</h2>
+                            <small>
+                                <i class="fas fa-user-slash"></i> No current assignment
+                            </small>
+                        </div>
+                        <i class="fas fa-user-slash fa-3x opacity-50"></i>
                     </div>
-                    <i class="fas fa-money-bill-wave fa-2x opacity-50"></i>
                 </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- ZERO ATTENDANCE LIST - HR ACTION          -->
+<!-- ========================================== -->
+{% if zero_attendance_count > 0 %}
+<div class="row g-4 mb-4">
+    <div class="col-md-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    ⚠️ Employees with Zero Attendance - HR Action Required
+                    <span class="badge bg-danger float-end">{{ zero_attendance_count }} Employees</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Employee Code</th>
+                                <th>Employee Name</th>
+                                <th>Client</th>
+                                <th>Location</th>
+                                <th>Contact</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for emp in zero_attendance_employees|slice:":10" %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td><code>{{ emp.employee_code }}</code></td>
+                                <td>
+                                    <a href="{% url 'employees:employee_detail' emp.id %}">
+                                        {{ emp.name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% with assignment=emp.assignments.all|first %}
+                                        {{ assignment.client.name|default:"-" }}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% with assignment=emp.assignments.all|first %}
+                                        {{ assignment.location.location_name|default:"-" }}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    <!-- Phone Call -->
+                                    {% if emp.phone %}
+                                        <a href="tel:{{ emp.phone }}" class="btn btn-sm btn-success" title="Call">
+                                            <i class="fas fa-phone"></i>
+                                        </a>
+                                        <!-- WhatsApp -->
+                                        <a href="https://wa.me/91{{ emp.phone }}" target="_blank"
+                                           class="btn btn-sm btn-success" title="WhatsApp" style="background-color: #25D366; border-color: #25D366; color: white;">
+                                            <i class="fab fa-whatsapp"></i>
+                                        </a>
+                                        <!-- SMS -->
+                                        <a href="sms:{{ emp.phone }}?body=Dear%20{{ emp.name }}%2C%0A%0AWe%20noticed%20zero%20attendance%20for%20this%20month.%20Please%20let%20us%20know%20your%20status.%0A%0ARegards%2C%0AHR%20Team"
+                                           class="btn btn-sm btn-secondary" title="SMS">
+                                            <i class="fas fa-sms"></i>
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">No phone</span>
+                                    {% endif %}
+                                    <!-- Email -->
+                                    {% if emp.email %}
+                                        <a href="mailto:{{ emp.email }}?subject=Attendance%20Follow-up&body=Dear%20{{ emp.name }}%2C%0A%0AWe%20noticed%20that%20you%20have%20not%20marked%20attendance%20for%20this%20month.%20Please%20let%20us%20know%20your%20status.%0A%0ARegards%2C%0AHR%20Team"
+                                           class="btn btn-sm btn-primary" title="Email">
+                                            <i class="fas fa-envelope"></i>
+                                        </a>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{% url 'employees:employee_detail' emp.id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'employees:employee_edit' emp.id %}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">
+                                    No zero attendance employees found.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if zero_attendance_count > 10 %}
+                    <div class="text-center mt-2">
+                        <a href="{% url 'employees:employee_list' %}?zero_attendance=yes" class="btn btn-warning btn-sm">
+                            View all {{ zero_attendance_count }} employees
+                        </a>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
+{% endif %}
 
-<!-- Quick Actions -->
+<!-- ========================================== -->
+<!-- QUICK ACTIONS                             -->
+<!-- ========================================== -->
 <div class="row g-4 mb-4">
     <div class="col-md-12">
         <div class="card">
@@ -79,7 +237,6 @@
             </div>
             <div class="card-body">
                 <div class="row g-3">
-                    <!-- ✅ Employee Management -->
                     <div class="col-md-2">
                         <a href="{% url 'employees:employee_list' %}" class="btn btn-outline-primary w-100 py-3">
                             <i class="fas fa-users fa-2x d-block mb-1"></i>
@@ -92,8 +249,6 @@
                             <small>Add Employee</small>
                         </a>
                     </div>
-
-                    <!-- Client Management -->
                     <div class="col-md-2">
                         <a href="{% url 'clients:client_list' %}" class="btn btn-outline-primary w-100 py-3">
                             <i class="fas fa-building fa-2x d-block mb-1"></i>
@@ -101,35 +256,21 @@
                         </a>
                     </div>
                     <div class="col-md-2">
-                        <a href="{% url 'clients:client_create' %}" class="btn btn-outline-success w-100 py-3">
-                            <i class="fas fa-building fa-2x d-block mb-1"></i>
-                            <small>Add Client</small>
-                        </a>
-                    </div>
-
-                    <!-- Payroll Actions -->
-                    <div class="col-md-2">
-                        <a href="#" class="btn btn-outline-warning w-100 py-3">
+                        <a href="{% url 'attendance:attendance_voucher_list' %}" class="btn btn-outline-info w-100 py-3">
                             <i class="fas fa-calendar-check fa-2x d-block mb-1"></i>
                             <small>Attendance</small>
                         </a>
                     </div>
                     <div class="col-md-2">
-                        <a href="#" class="btn btn-outline-danger w-100 py-3">
+                        <a href="{% url 'payroll:run_list' %}" class="btn btn-outline-warning w-100 py-3">
                             <i class="fas fa-calculator fa-2x d-block mb-1"></i>
-                            <small>Process Salary</small>
+                            <small>Payroll</small>
                         </a>
                     </div>
                     <div class="col-md-2">
-                        <a href="#" class="btn btn-outline-info w-100 py-3">
-                            <i class="fas fa-hand-holding-usd fa-2x d-block mb-1"></i>
-                            <small>Make Payment</small>
-                        </a>
-                    </div>
-                    <div class="col-md-2">
-                        <a href="{% url 'core:client_wise_summary' %}" class="btn btn-outline-secondary w-100 py-3">
-                            <i class="fas fa-chart-bar fa-2x d-block mb-1"></i>
-                            <small>Reports</small>
+                        <a href="{% url 'core:import_export' %}" class="btn btn-outline-secondary w-100 py-3">
+                            <i class="fas fa-exchange-alt fa-2x d-block mb-1"></i>
+                            <small>Import/Export</small>
                         </a>
                     </div>
                 </div>
@@ -138,108 +279,132 @@
     </div>
 </div>
 
-<!-- Charts and Recent Activity -->
+<!-- ========================================== -->
+<!-- RECENT ACTIVITY                           -->
+<!-- ========================================== -->
 <div class="row g-4">
-    <!-- Monthly Salary Chart -->
-    <div class="col-md-8">
+    <!-- Recent Employees -->
+    <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0"><i class="fas fa-chart-line"></i> Monthly Salary Trend</h5>
+                <h5 class="card-title mb-0"><i class="fas fa-user-plus"></i> Recent Employees</h5>
             </div>
-            <div class="card-body">
-                <canvas id="salaryChart" height="250"></canvas>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                {% if recent_employees %}
+                    {% for emp in recent_employees %}
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                            <div>
+                                <a href="{% url 'employees:employee_detail' emp.id %}">
+                                    <strong>{{ emp.name|default:"N/A" }}</strong>
+                                </a>
+                                <br>
+                                <small class="text-muted">
+                                    <code>{{ emp.employee_code|default:"N/A" }}</code>
+                                    {% if emp.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <small class="text-muted">{{ emp.created_at|date:"d-M-Y" }}</small>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center">No recent employees.</p>
+                {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- Recent Activity -->
-    <div class="col-md-4">
+    <!-- Recent Clients -->
+    <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0"><i class="fas fa-clock"></i> Recent Activity</h5>
+                <h5 class="card-title mb-0"><i class="fas fa-building"></i> Recent Clients</h5>
             </div>
             <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                {% if recent_vouchers %}
-                    <h6>Recent Salary Process</h6>
-                    {% for voucher in recent_vouchers %}
-                        <div class="d-flex justify-content-between align-items-center border-bottom py-1">
-                            <small>
-                                <a href="{% url 'core:process_voucher_detail' voucher.id %}">
-                                    {{ voucher.voucher_number }}
+                {% if recent_clients %}
+                    {% for client in recent_clients %}
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                            <div>
+                                <a href="{% url 'clients:client_detail' client.id %}">
+                                    <strong>{{ client.name }}</strong>
                                 </a>
-                            </small>
-                            <small class="text-success">₹{{ voucher.total_net_payable|floatformat:0 }}</small>
+                                <br>
+                                <small class="text-muted">
+                                    <code>{{ client.code }}</code>
+                                    {% if client.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <small class="text-muted">{{ client.created_at|date:"d-M-Y" }}</small>
                         </div>
                     {% endfor %}
-                {% endif %}
-
-                {% if recent_payments %}
-                    <hr>
-                    <h6>Recent Payments</h6>
-                    {% for payment in recent_payments %}
-                        <div class="d-flex justify-content-between align-items-center border-bottom py-1">
-                            <small>{{ payment.voucher_number }}</small>
-                            <small class="text-primary">₹{{ payment.total_amount|floatformat:0 }}</small>
-                        </div>
-                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center">No recent clients.</p>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- Reports Section -->
+<!-- ========================================== -->
+<!-- CHARTS                                    -->
+<!-- ========================================== -->
 <div class="row g-4 mt-2">
     <div class="col-md-12">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0"><i class="fas fa-file-alt"></i> Reports</h5>
+                <h5 class="card-title mb-0"><i class="fas fa-chart-pie"></i> Employee Distribution</h5>
             </div>
             <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <a href="{% url 'core:client_wise_summary' %}" class="text-decoration-none">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-users fa-2x text-primary"></i>
-                                    <h6 class="mt-2">Client-wise Summary</h6>
-                                    <small class="text-muted">View all clients with employee details</small>
-                                </div>
-                            </div>
-                        </a>
+                <div class="row">
+                    <div class="col-md-6">
+                        <canvas id="employeeChart" height="200"></canvas>
                     </div>
-                    <div class="col-md-3">
-                        <a href="#" class="text-decoration-none">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-file-invoice fa-2x text-success"></i>
-                                    <h6 class="mt-2">Salary Register</h6>
-                                    <small class="text-muted">Complete salary details</small>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{% url 'core:pending_payments_summary' %}" class="text-decoration-none">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-hourglass-half fa-2x text-warning"></i>
-                                    <h6 class="mt-2">Pending Payments</h6>
-                                    <small class="text-muted">Employees with pending balance</small>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="#" class="text-decoration-none">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-calculator fa-2x text-danger"></i>
-                                    <h6 class="mt-2">Statutory Reports</h6>
-                                    <small class="text-muted">PF/ESI/PT Reports</small>
-                                </div>
-                            </div>
-                        </a>
+                    <div class="col-md-6">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Count</th>
+                                        <th>Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="badge bg-success">Active</span></td>
+                                        <td>{{ active_with_attendance }}</td>
+                                        <td>{{ active_percentage }}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-warning">Zero Attendance</span></td>
+                                        <td>{{ zero_attendance_count }}</td>
+                                        <td>{{ zero_attendance_percentage }}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-info">Without Assignment</span></td>
+                                        <td>{{ without_assignment }}</td>
+                                        <td>{{ without_assignment_percentage }}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-danger">Inactive</span></td>
+                                        <td>{{ inactive_employees }}</td>
+                                        <td>{{ inactive_percentage }}%</td>
+                                    </tr>
+                                    <tr class="table-info">
+                                        <td><strong>Total</strong></td>
+                                        <td><strong>{{ total_employees }}</strong></td>
+                                        <td><strong>100%</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -249,38 +414,27 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Salary Chart
-    const ctx = document.getElementById('salaryChart').getContext('2d');
-    const monthlyData = {{ monthly_data|safe }};
-
+    const ctx = document.getElementById('employeeChart').getContext('2d');
     new Chart(ctx, {
-        type: 'bar',
+        type: 'doughnut',
         data: {
-            labels: monthlyData.map(d => d.month),
+            labels: ['Active', 'Zero Attendance', 'Without Assignment', 'Inactive'],
             datasets: [{
-                label: 'Monthly Salary (₹)',
-                data: monthlyData.map(d => d.total),
-                backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                borderColor: 'rgba(54, 162, 235, 1)',
+                data: [
+                    {{ active_with_attendance }},
+                    {{ zero_attendance_count }},
+                    {{ without_assignment }},
+                    {{ inactive_employees }}
+                ],
+                backgroundColor: ['#28a745', '#ffc107', '#17a2b8', '#dc3545'],
                 borderWidth: 2
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return '₹' + value.toLocaleString();
-                        }
-                    }
+                    position: 'bottom'
                 }
             }
         }

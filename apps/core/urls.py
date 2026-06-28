@@ -66,4 +66,8 @@ urlpatterns = [
     # BACK NAVIGATION
     # ==========================================
     path('back/', views.back_navigation, name='back_navigation'),
+    path('clear-import-errors/', views.clear_import_errors, name='clear_import_errors'),
+    path('export-import-errors/', views.export_import_errors, name='export_import_errors'),
+    path('import-assignments/', views.import_assignments, name='import_assignments'),
+    path('download-assignment-sample/', views.download_assignment_sample, name='download_assignment_sample'),
 ]

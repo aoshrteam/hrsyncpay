@@ -1,0 +1,179 @@
+<!-- templates/locations/location_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ location.location_name }} - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:location_list' %}">Locations</a></li>
+    <li class="breadcrumb-item active">{{ location.location_name }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Left Column - Info -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-map-pin"></i> Location Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-building fa-4x text-primary"></i>
+                    <h5 class="mt-2">{{ location.location_name }}</h5>
+                    <span class="badge {% if location.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                        {% if location.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                    {% if location.is_head_office %}
+                        <span class="badge bg-warning text-dark">Head Office</span>
+                    {% endif %}
+                </div>
+
+                <hr>
+
+                <div class="mb-2">
+                    <strong><i class="fas fa-building"></i> Client:</strong>
+                    <a href="{% url 'clients:client_detail' location.client.id %}">
+                        {{ location.client.name }}
+                    </a>
+                </div>
+                <div class="mb-2">
+                    <strong><i class="fas fa-code"></i> Code:</strong>
+                    <code>{{ location.location_code }}</code>
+                </div>
+                <div class="mb-2">
+                    <strong><i class="fas fa-tag"></i> Type:</strong>
+                    {{ location.get_location_type_display }}
+                </div>
+                <div class="mb-2">
+                    <strong><i class="fas fa-users"></i> Employees:</strong>
+                    {{ total_employees }}
+                </div>
+
+                <hr>
+
+                <h6><i class="fas fa-address-card"></i> Address</h6>
+                <p class="small">
+                    {{ location.address|default:"N/A" }}<br>
+                    {% if location.city %}{{ location.city }}, {% endif %}
+                    {% if location.state %}{{ location.state }}, {% endif %}
+                    {% if location.pincode %}{{ location.pincode }}, {% endif %}
+                    {% if location.country %}{{ location.country }}{% endif %}
+                </p>
+
+                <hr>
+
+                <h6><i class="fas fa-file-invoice"></i> GST Details</h6>
+                <div class="small">
+                    <div><strong>GST Number:</strong> {{ location.gst_number|default:location.client.gst_number|default:"N/A" }}</div>
+                    <div><strong>GST State:</strong> {{ location.gst_state|default:location.client.gst_state|default:"N/A" }}</div>
+                    <div><strong>GST Applicable:</strong> {% if location.gst_applicable %}Yes{% else %}No{% endif %}</div>
+                </div>
+
+                <hr>
+
+                <h6><i class="fas fa-phone"></i> Contact</h6>
+                <div class="small">
+                    <div><strong>Person:</strong> {{ location.contact_person|default:"N/A" }}</div>
+                    <div><strong>Email:</strong> {{ location.contact_email|default:"N/A" }}</div>
+                    <div><strong>Phone:</strong> {{ location.contact_phone|default:"N/A" }}</div>
+                    <div><strong>Mobile:</strong> {{ location.contact_mobile|default:"N/A" }}</div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="btn-group w-100">
+                    <a href="{% url 'locations:location_edit' location.id %}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <a href="{% url 'locations:location_toggle_status' location.id %}"
+                       class="btn {% if location.is_active %}btn-secondary{% else %}btn-success{% endif %}"
+                       onclick="return confirm('Toggle location status?')">
+                        <i class="fas {% if location.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>
+                        {% if location.is_active %}Deactivate{% else %}Activate{% endif %}
+                    </a>
+                    <a href="{% url 'locations:location_delete' location.id %}" class="btn btn-danger">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Employees -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-users"></i> Employees at this Location
+                </h5>
+                <a href="{% url 'locations:location_employee_add' location.id %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus"></i> Assign Employee
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Code</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mapping in employees %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'employees:employee_detail' mapping.employee.id %}">
+                                        {{ mapping.employee.name }}
+                                    </a>
+                                </td>
+                                <td><code>{{ mapping.employee.employee_code }}</code></td>
+                                <td>{{ mapping.start_date|date:"d-M-Y" }}</td>
+                                <td>{{ mapping.end_date|date:"d-M-Y"|default:"-" }}</td>
+                                <td>
+                                    <span class="badge {% if mapping.status == 'ACTIVE' %}bg-success{% elif mapping.status == 'TRANSFERRED' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                        {{ mapping.get_status_display }}
+                                    </span>
+                                    {% if mapping.is_current %}
+                                        <span class="badge bg-primary">Current</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{% url 'locations:location_employee_edit' mapping.id %}"
+                                           class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'locations:location_employee_delete' mapping.id %}"
+                                           class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="fas fa-users fa-3x text-muted"></i>
+                                    <p class="mt-2">No employees assigned to this location yet.</p>
+                                    <a href="{% url 'locations:location_employee_add' location.id %}" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Assign Employee
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

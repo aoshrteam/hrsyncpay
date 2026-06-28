@@ -1,0 +1,131 @@
+<!-- templates/locations/location_employees.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Employees at {{ location.location_name }} - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:location_list' %}">Locations</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:location_detail' location.id %}">{{ location.location_name }}</a></li>
+    <li class="breadcrumb-item active">Employees</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4>
+        <i class="fas fa-users"></i> Employees at {{ location.location_name }}
+    </h4>
+    <div>
+        <a href="{% url 'locations:location_employee_add' location.id %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Assign Employee
+        </a>
+        <a href="{% url 'locations:location_detail' location.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">{{ mappings|length }}</h5>
+                <p class="card-text text-muted">Total Assignments</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-success">
+                    {{ mappings|selectattr:"is_current"|length }}
+                </h5>
+                <p class="card-text text-muted">Current Employees</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-primary">
+                    {{ mappings|selectattr:"status"|length }}
+                </h5>
+                <p class="card-text text-muted">Active Assignments</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Employee Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Employee</th>
+                        <th>Code</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                        <th>Current</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mapping in mappings %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <a href="{% url 'employees:employee_detail' mapping.employee.id %}">
+                                {{ mapping.employee.name }}
+                            </a>
+                        </td>
+                        <td><code>{{ mapping.employee.employee_code }}</code></td>
+                        <td>{{ mapping.start_date|date:"d-M-Y" }}</td>
+                        <td>{{ mapping.end_date|date:"d-M-Y"|default:"-" }}</td>
+                        <td>
+                            <span class="badge {% if mapping.status == 'ACTIVE' %}bg-success{% elif mapping.status == 'TRANSFERRED' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                {{ mapping.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if mapping.is_current %}
+                                <span class="badge bg-primary">Yes</span>
+                            {% else %}
+                                <span class="badge bg-secondary">No</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{% url 'locations:location_employee_edit' mapping.id %}"
+                                   class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'locations:location_employee_delete' mapping.id %}"
+                                   class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted"></i>
+                            <p class="mt-2">No employees assigned to this location yet.</p>
+                            <a href="{% url 'locations:location_employee_add' location.id %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Assign Employee
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

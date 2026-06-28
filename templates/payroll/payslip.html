@@ -1,0 +1,51 @@
+<!-- templates/payroll/payslip.html -->
+
+<div class="card">
+    <div class="card-header">
+        <h5>{{ assignment.employee.name }} - Payslip</h5>
+        <p class="text-muted">{{ assignment.client.name }} | {{ month_year }}</p>
+    </div>
+    <div class="card-body">
+        <table class="table">
+            <tr>
+                <th><strong>Basic Pay</strong></th>
+                <td>₹{{ basic_pay|floatformat:2 }}</td>
+                <th><strong>Total Earnings</strong></th>
+                <td>₹{{ total_earnings|floatformat:2 }}</td>
+            </tr>
+
+            <!-- ✅ EARNINGS - All Client Payheads -->
+            <tr class="table-info">
+                <td colspan="4"><strong>Earnings</strong></td>
+            </tr>
+            {% for earning in earnings %}
+            <tr>
+                <td>{{ earning.name }}</td>
+                <td>₹{{ earning.value|floatformat:2 }}</td>
+                <td></td>
+                <td></td>
+            </tr>
+            {% endfor %}
+
+            <!-- ✅ DEDUCTIONS - All Client Payheads -->
+            <tr class="table-danger">
+                <td colspan="4"><strong>Deductions</strong></td>
+            </tr>
+            {% for deduction in deductions %}
+            <tr>
+                <td>{{ deduction.name }}</td>
+                <td>₹{{ deduction.value|floatformat:2 }}</td>
+                <td></td>
+                <td></td>
+            </tr>
+            {% endfor %}
+
+            <tr class="table-success">
+                <td><strong>Total Deductions</strong></td>
+                <td><strong>₹{{ total_deductions|floatformat:2 }}</strong></td>
+                <td><strong>Net Payable</strong></td>
+                <td><strong>₹{{ net_payable|floatformat:2 }}</strong></td>
+            </tr>
+        </table>
+    </div>
+</div>

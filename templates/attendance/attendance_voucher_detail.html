@@ -2,7 +2,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ voucher.voucher_number }} - HRSyncPay{% endblock %}
+{% block title %}{{ voucher.voucher_number }} - Attendance{% endblock %}
 
 {% block breadcrumb %}
     <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
@@ -11,165 +11,247 @@
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4><i class="fas fa-calendar-check"></i> {{ voucher.voucher_number }}</h4>
-    <div>
-        {% if voucher.status == 'DRAFT' %}
-            <a href="{% url 'attendance:attendance_voucher_edit' voucher.id %}" class="btn btn-warning">
-                <i class="fas fa-user-plus"></i> Add Employee
-            </a>
-            <a href="{% url 'attendance:attendance_voucher_import' voucher.id %}" class="btn btn-success">
-                <i class="fas fa-file-import"></i> Import Excel
-            </a>
-            <a href="{% url 'attendance:attendance_voucher_finalize' voucher.id %}" class="btn btn-primary"
-               onclick="return confirm('Finalize this voucher?')">
-                <i class="fas fa-check"></i> Finalize
-            </a>
-        {% endif %}
-        <a href="{% url 'attendance:attendance_export_excel' voucher.id %}" class="btn btn-info">
-            <i class="fas fa-file-excel"></i> Export
-        </a>
-        <a href="{% url 'attendance:attendance_voucher_list' %}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back
-        </a>
-    </div>
-</div>
+<div class="row">
+    <div class="col-md-12">
+        <!-- Voucher Info -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-check"></i> {{ voucher.voucher_number }}
+                </h5>
+                <div>
+                    <a href="{% url 'attendance:attendance_voucher_edit' voucher.id %}" class="btn btn-warning btn-sm">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <a href="{% url 'attendance:attendance_import' voucher.id %}" class="btn btn-success btn-sm">
+                        <i class="fas fa-file-import"></i> Import
+                    </a>
+                    <a href="{% url 'attendance:attendance_voucher_delete' voucher.id %}" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash"></i> Delete
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Client:</strong> {{ voucher.client.name }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Month:</strong> {{ voucher.month_year|date:"F Y" }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Status:</strong>
+                        <span class="badge {% if voucher.status == 'FINALIZED' %}bg-success{% elif voucher.status == 'PROCESSED' %}bg-info{% else %}bg-warning{% endif %}">
+                            {{ voucher.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Total Employees:</strong> {{ total_employees }}
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<!-- Summary Cards -->
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="card text-white bg-primary">
-            <div class="card-body">
-                <h6 class="card-title">Total Employees</h6>
-                <h2 class="mb-0">{{ details|length }}</h2>
+        <!-- Statistics -->
+        <div class="row mt-3">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="text-primary">{{ voucher.total_present_days|floatformat:1 }}</h5>
+                        <small class="text-muted">Total Present Days</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="text-danger">{{ voucher.total_absent_days|floatformat:1 }}</h5>
+                        <small class="text-muted">Total Absent Days</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="text-warning">{{ voucher.total_leave_days|floatformat:1 }}</h5>
+                        <small class="text-muted">Total Leave Days</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="text-success">{{ total_employees }}</h5>
+                        <small class="text-muted">Total Employees</small>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-success">
-            <div class="card-body">
-                <h6 class="card-title">Total Present Days</h6>
-                <h2 class="mb-0">{{ total_present|floatformat:0 }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-warning">
-            <div class="card-body">
-                <h6 class="card-title">Total Absent Days</h6>
-                <h2 class="mb-0">{{ total_absent|floatformat:0 }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-info">
-            <div class="card-body">
-                <h6 class="card-title">Total Overtime Hours</h6>
-                <h2 class="mb-0">{{ total_overtime|floatformat:0 }}</h2>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Voucher Info -->
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-4">
-                <strong>Voucher Number:</strong> {{ voucher.voucher_number }}
-            </div>
-            <div class="col-md-4">
-                <strong>Month:</strong> {{ voucher.month_year|date:"F Y" }}
-            </div>
-            <div class="col-md-4">
-                <strong>Client:</strong> {{ voucher.client.name }}
+        <!-- Search & Bulk Delete -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <form method="get" class="d-flex">
+                            <input type="text" name="search" class="form-control me-2"
+                                   placeholder="Search by name or code..." value="{{ search|default:'' }}">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                            {% if search %}
+                                <a href="{% url 'attendance:attendance_voucher_detail' voucher.id %}" class="btn btn-secondary ms-2">
+                                    <i class="fas fa-times"></i> Clear
+                                </a>
+                            {% endif %}
+                        </form>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button type="button" class="btn btn-danger" onclick="bulkDelete()">
+                            <i class="fas fa-trash"></i> Delete Selected
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="row mt-2">
-            <div class="col-md-4">
-                <strong>Status:</strong>
-                {% if voucher.status == 'DRAFT' %}
-                    <span class="badge bg-warning">Draft</span>
-                {% elif voucher.status == 'FINALIZED' %}
-                    <span class="badge bg-success">Finalized</span>
-                {% else %}
-                    <span class="badge bg-info">Processed</span>
+
+        <!-- Attendance Details Table -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <form id="bulk-delete-form" method="post" action="{% url 'attendance:attendance_voucher_bulk_delete' voucher.id %}">
+                    {% csrf_token %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <input type="checkbox" id="select-all" class="form-check-input">
+                                    </th>
+                                    <th>#</th>
+                                    <th>Employee Code</th>
+                                    <th>Employee Name</th>
+                                    <th>Present</th>
+                                    <th>Absent</th>
+                                    <th>Leave</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for detail in page_obj %}
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" name="detail_ids" value="{{ detail.id }}" class="form-check-input detail-checkbox">
+                                    </td>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><code>{{ detail.employee.employee_code }}</code></td>
+                                    <td>{{ detail.employee.name }}</td>
+                                    <td>{{ detail.days_present|floatformat:1 }}</td>
+                                    <td>{{ detail.days_absent|floatformat:1 }}</td>
+                                    <td>{{ detail.days_leave|floatformat:1 }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'attendance:attendance_detail_edit' detail.id %}" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'attendance:attendance_detail_delete' detail.id %}" class="btn btn-sm btn-danger"
+                                               onclick="return confirm('Delete this record?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-4">
+                                        <i class="fas fa-calendar-check fa-3x text-muted"></i>
+                                        <p class="mt-2">No attendance records found.</p>
+                                        <a href="{% url 'attendance:attendance_import' voucher.id %}" class="btn btn-primary">
+                                            <i class="fas fa-file-import"></i> Import Attendance
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
                 {% endif %}
-            </div>
-            <div class="col-md-4">
-                <strong>Created By:</strong> {{ voucher.created_by.username|default:"System" }}
-            </div>
-            <div class="col-md-4">
-                <strong>Created On:</strong> {{ voucher.created_at|date:"d-M-Y H:i" }}
+
+                <div class="text-muted mt-2">
+                    <i class="fas fa-info-circle"></i> Total Records: {{ total_employees }}
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Attendance Details Table -->
-<div class="card">
-    <div class="card-header">
-        <h6 class="mb-0"><i class="fas fa-users"></i> Employee Attendance</h6>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Employee</th>
-                        <th>Code</th>
-                        <th>Present</th>
-                        <th>Absent</th>
-                        <th>Leave</th>
-                        <th>Overtime</th>
-                        <th>Production</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for detail in details %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ detail.employee.name }}</td>
-                        <td><code>{{ detail.employee.employee_code }}</code></td>
-                        <td>{{ detail.days_present|floatformat:0 }}</td>
-                        <td>{{ detail.days_absent|floatformat:0 }}</td>
-                        <td>{{ detail.days_leave|floatformat:0 }}</td>
-                        <td>{{ detail.overtime_hours|floatformat:0 }}</td>
-                        <td>{{ detail.production_units }}</td>
-                        <td>
-                            {% if voucher.status == 'DRAFT' %}
-                                <form method="post" action="{% url 'attendance:attendance_detail_delete' detail.id %}"
-                                      style="display: inline;"
-                                      onsubmit="return confirm('Delete this record?')">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="9" class="text-center py-4">
-                            <i class="fas fa-users fa-3x text-muted"></i>
-                            <p class="mt-2">No employees added yet.</p>
-                            {% if voucher.status == 'DRAFT' %}
-                                <a href="{% url 'attendance:attendance_voucher_edit' voucher.id %}" class="btn btn-primary">
-                                    <i class="fas fa-user-plus"></i> Add Employee
-                                </a>
-                                <a href="{% url 'attendance:attendance_voucher_import' voucher.id %}" class="btn btn-success">
-                                    <i class="fas fa-file-import"></i> Import Excel
-                                </a>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<script>
+    // Select all checkbox
+    document.getElementById('select-all').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.detail-checkbox');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+
+    // Bulk delete function
+    function bulkDelete() {
+        const checkboxes = document.querySelectorAll('.detail-checkbox:checked');
+        if (checkboxes.length === 0) {
+            alert('Please select at least one record to delete.');
+            return;
+        }
+        if (confirm(`Delete ${checkboxes.length} selected record(s)? This action cannot be undone.`)) {
+            document.getElementById('bulk-delete-form').submit();
+        }
+    }
+
+    <!-- Add this button next to Delete Selected -->
+<div class="col-md-6 text-end">
+    <div class="btn-group">
+        <button type="button" class="btn btn-danger" onclick="bulkDelete()">
+            <i class="fas fa-trash"></i> Delete Selected
+        </button>
+        <a href="{% url 'attendance:attendance_voucher_bulk_delete_all' voucher.id %}" class="btn btn-danger">
+            <i class="fas fa-trash-alt"></i> Delete All
+        </a>
     </div>
 </div>
+</script>
 {% endblock %}

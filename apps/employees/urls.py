@@ -109,4 +109,13 @@ urlpatterns = [
 
     # Get employee assignments (JSON)
     path('api/<int:pk>/assignments/', views.get_employee_assignments, name='get_employee_assignments'),
+# ✅ Employee Assignments
+    path('<int:pk>/assignments/', views.employee_assignments, name='employee_assignments'),
+    path('<int:pk>/assignments/create/', views.assignment_create, name='assignment_create'),
+    path('assignments/<int:pk>/edit/', views.assignment_edit, name='assignment_edit'),
+    path('assignments/<int:pk>/delete/', views.assignment_delete, name='assignment_delete'),
+
+# Bulk Delete
+    path('bulk-delete/', views.employee_bulk_delete, name='employee_bulk_delete'),
+    path('bulk-delete-all/', views.employee_bulk_delete_all, name='employee_bulk_delete_all'),
 ]

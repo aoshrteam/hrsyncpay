@@ -1,0 +1,61 @@
+<!-- templates/employees/employee_bulk_delete_all.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete All Employees - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'employees:employee_list' %}">Employees</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'employees:employee_bulk_delete' %}">Bulk Delete</a></li>
+    <li class="breadcrumb-item active">Delete All</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Delete All Employees
+                </h5>
+            </div>
+            <div class="card-body text-center py-4">
+                <i class="fas fa-users fa-4x text-danger mb-3"></i>
+
+                <h4>Are you sure?</h4>
+                <p class="text-muted">
+                    You are about to delete <strong>{{ total_count }}</strong> employees.
+                </p>
+
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <strong>This action cannot be undone!</strong>
+                    <br>
+                    All employee data including documents and assignments will be permanently deleted.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Type <strong>"YES"</strong> to confirm deletion:
+                        </label>
+                        <input type="text" name="confirm" class="form-control text-center"
+                               placeholder="Type YES to confirm" required>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="fas fa-trash"></i> Yes, Delete All Employees
+                        </button>
+                        <a href="{% url 'employees:employee_bulk_delete' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

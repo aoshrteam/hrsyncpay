@@ -1,5 +1,5 @@
 # Core Django
-Django==4.2.7
+Django
 
 # Django Extensions
 django-crispy-forms==2.1

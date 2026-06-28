@@ -1,0 +1,239 @@
+<!-- templates/locations/location_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - HRSyncPay{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'locations:location_list' %}">Locations</a></li>
+    {% if client %}
+        <li class="breadcrumb-item"><a href="{% url 'clients:client_detail' client.id %}">{{ client.name }}</a></li>
+    {% endif %}
+    <li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-map-pin"></i> {{ title }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- Basic Details -->
+                    <h6 class="border-bottom pb-2 mb-3 text-primary">
+                        <i class="fas fa-info-circle"></i> Basic Details
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.client|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.location_code|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.location_name|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.location_type|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.is_head_office|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- Address Details -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-success">
+                        <i class="fas fa-address-card"></i> Address Details
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.address|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.city|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.state|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.pincode|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.country|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.latitude|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.longitude|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- GST Details -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-warning">
+                        <i class="fas fa-file-invoice"></i> GST Details
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.gst_number|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.gst_state|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.gst_applicable|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- Contact Details -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-info">
+                        <i class="fas fa-phone"></i> Contact Details
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.contact_person|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.contact_email|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.contact_phone|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.contact_mobile|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- Billing Settings -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-danger">
+                        <i class="fas fa-money-bill-wave"></i> Billing Settings
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.auto_billing_enabled|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.commission_type|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.commission_rate|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.service_charge|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.payment_terms|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.credit_limit|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4 text-secondary">
+                        <i class="fas fa-toggle-on"></i> Status
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.is_active|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.notes|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> {{ button_text }}
+                        </button>
+                        {% if client %}
+                            <a href="{% url 'locations:location_list_by_client' client.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        {% else %}
+                            <a href="{% url 'locations:location_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-generate location code from client name
+    document.addEventListener('DOMContentLoaded', function() {
+        const clientSelect = document.getElementById('id_client');
+        const codeField = document.getElementById('id_location_code');
+        const nameField = document.getElementById('id_location_name');
+        const isHeadOffice = document.getElementById('id_is_head_office');
+
+        // When client changes, suggest location code
+        if (clientSelect && codeField) {
+            clientSelect.addEventListener('change', function() {
+                const clientName = this.options[this.selectedIndex]?.text || '';
+                const parts = clientName.split(' ');
+                let code = '';
+                parts.forEach(part => {
+                    if (part.length > 0) {
+                        code += part[0].toUpperCase();
+                    }
+                });
+                if (code.length < 3) {
+                    code = 'LOC';
+                }
+                if (!codeField.value || codeField.value === 'LOC-001') {
+                    codeField.value = code + '-001';
+                }
+            });
+        }
+
+        // Auto-fill location name
+        if (clientSelect && nameField) {
+            clientSelect.addEventListener('change', function() {
+                const clientName = this.options[this.selectedIndex]?.text || '';
+                if (!nameField.value) {
+                    nameField.value = clientName + ' Office';
+                }
+            });
+        }
+
+        // Head office checkbox - auto set location type
+        if (isHeadOffice) {
+            isHeadOffice.addEventListener('change', function() {
+                const typeField = document.getElementById('id_location_type');
+                if (this.checked) {
+                    typeField.value = 'HEAD_OFFICE';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
